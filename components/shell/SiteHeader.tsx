@@ -8,6 +8,7 @@ import { LiabilityGauge } from "@/components/ds/LiabilityGauge";
 const NAV = [
   { href: "/diagnosis", label: "자가진단" },
   { href: "/risk-assessment/new", label: "위험성평가" },
+  { href: "/pricing", label: "요금제" },
 ] as const;
 
 /**
