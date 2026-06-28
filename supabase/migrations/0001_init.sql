@@ -2,8 +2,8 @@
 -- 실행: Supabase SQL Editor 또는 `supabase db push`
 -- 데이터 모델은 Phase 0 스펙 그대로. RULE DATA(obligations, hazard_seeds)는 사람이 큐레이션해 시드 주입.
 
-create extension if not exists "pgvector";
-create extension if not exists "pgcrypto";
+create extension if not exists vector;
+create extension if not exists pgcrypto;
 
 -- ───────────────────────── 사업장
 create table if not exists workspaces (
