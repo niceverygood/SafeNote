@@ -1,0 +1,74 @@
+[
+  {
+    "industry_code": "manufacturing",
+    "process_keyword": "프레스",
+    "hazard": "프레스 슬라이드 하강 시 손·팔 끼임",
+    "default_measures": ["방호장치(광전자식 안전장치) 설치·점검", "양수조작식 기동장치 적용", "금형 교체 시 안전블록 사용"]
+  },
+  {
+    "industry_code": "manufacturing",
+    "process_keyword": "컨베이어",
+    "hazard": "컨베이어 회전부 말림·끼임",
+    "default_measures": ["덮개·울 등 방호덮개 설치", "비상정지장치 설치", "청소·정비 시 운전정지 및 잠금(LOTO)"]
+  },
+  {
+    "industry_code": "manufacturing",
+    "process_keyword": "지게차",
+    "hazard": "지게차 충돌·전도, 화물 낙하",
+    "default_measures": ["작업계획서 작성·운행경로 분리", "후방감지·경광등 설치", "유자격자 운전 및 안전벨트 착용"]
+  },
+  {
+    "industry_code": "manufacturing",
+    "process_keyword": "용접",
+    "hazard": "용접 흄·가스 흡입 및 화재·폭발",
+    "default_measures": ["국소배기장치 설치·가동", "호흡보호구 지급", "가연물 격리 및 소화기 비치"]
+  },
+  {
+    "industry_code": "construction",
+    "process_keyword": "고소작업",
+    "hazard": "고소작업 중 추락",
+    "default_measures": ["작업발판·안전난간 설치", "안전대 부착설비 및 안전대 착용", "개구부 덮개·표지"]
+  },
+  {
+    "industry_code": "construction",
+    "process_keyword": "굴착",
+    "hazard": "굴착면 붕괴·매몰",
+    "default_measures": ["흙막이 지보공 설치", "굴착면 기울기 기준 준수", "출입금지 구역 설정"]
+  },
+  {
+    "industry_code": "logistics",
+    "process_keyword": "상하차",
+    "hazard": "화물 상하차 중 근골격계 부담 및 낙하",
+    "default_measures": ["기계화 하역장비 사용", "중량물 취급 작업 표준 마련", "적재 높이 제한·결박"]
+  },
+  {
+    "industry_code": "logistics",
+    "process_keyword": "지게차",
+    "hazard": "물류센터 내 지게차-보행자 충돌",
+    "default_measures": ["보행자 통로 분리·표시", "교차구간 속도제한·반사경", "유자격자 운전"]
+  },
+  {
+    "industry_code": "food_service",
+    "process_keyword": "조리",
+    "hazard": "고온 조리기구·기름에 의한 화상",
+    "default_measures": ["내열장갑·앞치마 지급", "기름 비산 방지 및 환기", "바닥 미끄럼 방지 처리"]
+  },
+  {
+    "industry_code": "waste",
+    "process_keyword": "선별",
+    "hazard": "선별 컨베이어 끼임 및 분진·감염성 위험",
+    "default_measures": ["회전부 방호덮개·비상정지", "분진 마스크·보호구 지급", "예리물 베임 방지 장갑"]
+  },
+  {
+    "industry_code": "auto_repair",
+    "process_keyword": "리프트",
+    "hazard": "차량 리프트 하강·전도에 의한 깔림",
+    "default_measures": ["리프트 안전장치 점검", "받침대 병행 사용", "하부 작업 중 출입통제"]
+  },
+  {
+    "industry_code": "facility_mgmt",
+    "process_keyword": "청소",
+    "hazard": "고소 유리창 청소 중 추락 및 미끄러짐",
+    "default_measures": ["안전대·작업발판 사용", "미끄럼 경고표지", "2인 1조 작업"]
+  }
+]

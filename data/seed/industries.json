@@ -1,0 +1,11 @@
+[
+  { "code": "manufacturing", "name": "제조업", "sort_order": 1 },
+  { "code": "construction", "name": "건설업", "sort_order": 2 },
+  { "code": "logistics", "name": "운수·창고·물류업", "sort_order": 3 },
+  { "code": "wholesale_retail", "name": "도·소매업", "sort_order": 4 },
+  { "code": "food_service", "name": "음식·숙박업", "sort_order": 5 },
+  { "code": "waste", "name": "폐기물 수집·처리·재활용업", "sort_order": 6 },
+  { "code": "facility_mgmt", "name": "시설관리·청소·경비업", "sort_order": 7 },
+  { "code": "auto_repair", "name": "자동차 정비·수리업", "sort_order": 8 },
+  { "code": "etc", "name": "기타", "sort_order": 99 }
+]

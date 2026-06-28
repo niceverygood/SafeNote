@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Pretendard (next/font에 없어 CDN 사용 — 표제 700/800, 본문 400/500) */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+:root {
+  --font-pretendard: "Pretendard Variable", Pretendard;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-surface text-ink font-sans;
+  }
+  /* 키보드 포커스 가시화 (필수) */
+  :focus-visible {
+    @apply outline-none ring-2 ring-safe ring-offset-2 ring-offset-surface;
+  }
+  ::selection {
+    background-color: #15643e22;
+  }
+}
+
+@layer utilities {
+  /* 데이터(%, 점수, 날짜, ID)는 항상 mono + tabular */
+  .num {
+    @apply font-mono tabular-nums;
+  }
+}
+
+/* reduced-motion 존중 (필수) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
