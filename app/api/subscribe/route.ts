@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServiceSupabase } from "@/lib/supabase/server";
+import { addStibeeSubscriber } from "@/lib/stibee";
 
 export const runtime = "nodejs";
 
@@ -29,5 +30,16 @@ export async function POST(req: Request) {
     source: parsed.data.source ?? "pricing",
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // 너처링 리스트 자동 등록(키 없으면 스킵)
+  await addStibeeSubscriber({
+    email: parsed.data.email,
+    name: parsed.data.name,
+    phone: parsed.data.phone,
+    fields: {
+      company: parsed.data.company ?? "",
+      plan: parsed.data.plan,
+      source: parsed.data.source ?? "pricing",
+    },
+  });
   return NextResponse.json({ ok: true });
 }

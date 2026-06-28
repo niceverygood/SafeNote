@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Disclaimer } from "@/components/ds/Disclaimer";
+import { ShareInvite } from "@/components/share/ShareInvite";
 
 export default function LandingPage() {
   return (
@@ -67,6 +68,59 @@ export default function LandingPage() {
         </dl>
       </section>
 
+      {/* 요금제 노출 — 진단은 무료, 증빙 단계부터 구독 */}
+      <section className="border-t border-border py-14 sm:py-16" aria-labelledby="pricing-heading">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 id="pricing-heading" className="text-lg font-bold tracking-tight text-ink">
+            진단은 무료, 증빙을 쌓는 단계부터 구독
+          </h2>
+          <Link href="/pricing" className="text-sm font-semibold text-safe hover:underline">
+            요금제 자세히 보기 →
+          </Link>
+        </div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {PLANS.map((p) => (
+            <div
+              key={p.name}
+              className={`rounded-lg border bg-white p-5 ${
+                p.highlight ? "border-safe ring-1 ring-safe" : "border-border"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-ink">{p.name}</span>
+                {p.highlight && (
+                  <span className="rounded-full border border-safe/30 bg-safe/10 px-2 py-0.5 text-[11px] font-semibold text-safe">
+                    추천
+                  </span>
+                )}
+              </div>
+              <div className="mt-2 flex items-end gap-1">
+                <span className={`num text-xl font-bold ${p.highlight ? "text-safe" : "text-ink"}`}>
+                  {p.price}
+                </span>
+                <span className="mb-0.5 text-xs text-muted">{p.unit}</span>
+              </div>
+              <p className="mt-1 text-sm text-muted">{p.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 추천 — 동료 대표에게 공유 */}
+      <section className="border-t border-border py-14 sm:py-16" aria-labelledby="referral-heading">
+        <h2 id="referral-heading" className="text-lg font-bold tracking-tight text-ink">
+          아는 대표님과 함께 대비하세요
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
+          5인 이상이면 모든 사업장 대표에게 책임이 적용됩니다. 같은 고민을 하는 대표님께
+          무료 진단을 공유해 보세요. 구독 전환 시 추천인·피추천인 모두에게 드리는 혜택은
+          구독 문의 시 안내해 드립니다.
+        </p>
+        <div className="mt-5 max-w-md">
+          <ShareInvite refCode="landing" />
+        </div>
+      </section>
+
       {/* 하단 진단 유도 + 고지문 */}
       <section className="border-t border-border py-12">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -86,6 +140,12 @@ export default function LandingPage() {
     </div>
   );
 }
+
+const PLANS = [
+  { name: "무료 진단", price: "0원", unit: "", desc: "가입 없이 5분, 면책 갭 확인", highlight: false },
+  { name: "스탠다드", price: "49,000원", unit: "/ 월", desc: "증빙 생성·확정·보관", highlight: true },
+  { name: "프로", price: "99,000원", unit: "/ 월", desc: "공정 무제한·우선 지원", highlight: false },
+] as const;
 
 const VALUES = [
   {

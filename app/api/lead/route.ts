@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServiceSupabase } from "@/lib/supabase/server";
+import { addStibeeSubscriber } from "@/lib/stibee";
 
 export const runtime = "nodejs";
 
@@ -51,6 +52,8 @@ export async function POST(req: Request) {
     if (error) {
       return NextResponse.json({ error: "저장에 실패했습니다." }, { status: 500 });
     }
+    // 너처링 리스트 자동 등록(키 없으면 스킵, 실패해도 무시)
+    await addStibeeSubscriber({ email, name, phone, fields: { source: "diagnosis" } });
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "저장 중 오류가 발생했습니다." }, { status: 500 });

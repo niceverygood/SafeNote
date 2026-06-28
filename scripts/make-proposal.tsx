@@ -3,8 +3,26 @@
  * 원칙: "면책 보장" 류 표현 없음, 하단 법적 고지.
  */
 import React from "react";
-import { Document, Page, Text, View, StyleSheet, Font, Svg, Circle, renderToFile } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Font, Svg, Circle, Rect, renderToFile } from "@react-pdf/renderer";
 import { join } from "node:path";
+
+// 제휴 문의 연락처 — 실제 값으로 교체 후 재생성하세요.
+const CONTACT = {
+  company: "Bottle Corp.",
+  email: "dev@bottlecorp.kr",
+  phone: "", // 예: "02-000-0000" (없으면 표시 안 함)
+  web: "safe-note-roan.vercel.app/diagnosis",
+};
+
+// 브랜드 로고 마크 (SiteHeader와 동일: 라운드 사각 + 안쪽 사각)
+function LogoMark({ size = 18 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Rect x="1" y="1" width="22" height="22" rx="5" fill="#15643E1A" stroke="#15643E66" strokeWidth="1.2" />
+      <Rect x="8" y="8" width="8" height="8" rx="2" fill="#15643E" />
+    </Svg>
+  );
+}
 
 const C = { surface: "#F6F7F5", ink: "#16201C", safe: "#15643E", caution: "#C2841C", border: "#DCE0DA", muted: "#5C6B62", white: "#FFFFFF" };
 const P = "https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/public/static";
@@ -44,8 +62,11 @@ const Doc = (
   <Document title="세이프노트 제휴 제안서" author="SafeNote">
     {/* 표지 */}
     <Page size="A4" style={s.page}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={s.wordmark}>S A F E N O T E</Text>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+          <LogoMark size={18} />
+          <Text style={s.wordmark}>S A F E N O T E</Text>
+        </View>
         <Text style={[s.muted, { fontSize: 8.5 }]}>Partnership Proposal</Text>
       </View>
       <View style={{ marginTop: 150 }}>
@@ -150,9 +171,15 @@ const Doc = (
       <Bullet>파일럿 — 전용 링크/화이트라벨 발급, 무료 자가진단부터 안내</Bullet>
       <Bullet>정산 합의 — 수수료율·주기·추적 방식 문서화 → 본격 운영</Bullet>
 
-      <View style={{ marginTop: 14, borderTopWidth: 1, borderColor: C.border, paddingTop: 10 }}>
-        <Text style={s.h3}>문의</Text>
-        <Text style={[s.body, s.muted]}>SafeNote 제휴팀 · 이메일/연락처 기입 · 데모: safe-note-roan.vercel.app/diagnosis</Text>
+      <View style={{ marginTop: 14, borderTopWidth: 1, borderColor: C.border, paddingTop: 10, flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <LogoMark size={22} />
+        <View>
+          <Text style={s.h3}>{CONTACT.company} · SafeNote 제휴팀</Text>
+          <Text style={[s.body, s.muted]}>
+            이메일 {CONTACT.email}
+            {CONTACT.phone ? ` · 전화 ${CONTACT.phone}` : ""} · 데모 {CONTACT.web}
+          </Text>
+        </View>
       </View>
       <Footer p="03 · 모델과 시작" />
     </Page>

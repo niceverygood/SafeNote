@@ -194,7 +194,7 @@ function ReportView() {
 
       {/* 추천·공유 그로스 훅 */}
       <section className="mt-8">
-        <ShareInvite ref="report" />
+        <ShareInvite refCode="report" />
       </section>
 
       <div className="mt-10 border-t border-border pt-4">

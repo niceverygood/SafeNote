@@ -7,17 +7,17 @@ import { useState } from "react";
  * Web Share API 지원 시 네이티브 공유, 아니면 링크 복사.
  */
 export function ShareInvite({
-  ref = "share",
+  refCode = "share",
   className = "",
 }: {
-  ref?: string;
+  refCode?: string;
   className?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
   function url() {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    return `${origin}/diagnosis?ref=${encodeURIComponent(ref)}`;
+    return `${origin}/diagnosis?ref=${encodeURIComponent(refCode)}`;
   }
 
   async function share() {
