@@ -30,6 +30,9 @@ export function SiteHeader() {
     }
   }, [pathname]);
 
+  // 관리자 콘솔은 자체 내비(AdminNav)를 쓰므로 공개 헤더 숨김
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
       <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4 sm:px-6">

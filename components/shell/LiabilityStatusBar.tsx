@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LiabilityGauge } from "@/components/ds/LiabilityGauge";
 import { RiskChip } from "@/components/ds/StatusChip";
@@ -12,6 +13,7 @@ import { exposureFromScore } from "@/lib/status";
  * 미완료 → 중립 안내 + "진단하기" CTA. 절제된 톤.
  */
 export function LiabilityStatusBar() {
+  const pathname = usePathname();
   const [score, setScore] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -28,6 +30,9 @@ export function LiabilityStatusBar() {
       setReady(true);
     }
   }, []);
+
+  // 관리자 콘솔에서는 공개 상태 바 숨김
+  if (pathname.startsWith("/admin")) return null;
 
   // 하이드레이션 불일치 방지: 클라이언트 측정 전에는 중립 상태로 렌더.
   const hasScore = ready && score !== null;

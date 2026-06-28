@@ -125,8 +125,8 @@ function Gauge({ pct, size = 130, caption = "면책 이행률" }: { pct: number;
             fill="none"
             strokeLinecap="round"
             strokeDasharray={`${c}`}
-            strokeDashoffset={off}
             transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            {...({ strokeDashoffset: off } as Record<string, number>)}
           />
         </Svg>
         <View
