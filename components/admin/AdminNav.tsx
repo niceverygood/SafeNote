@@ -10,7 +10,6 @@ const LINKS: { href: string; label: string; superOnly?: boolean }[] = [
   { href: "/admin/leads", label: "리드·진단" },
   { href: "/admin/risk", label: "위험성평가" },
   { href: "/admin/workspaces", label: "사업장" },
-  { href: "/admin/subscriptions", label: "구독 문의" },
   { href: "/admin/rules", label: "규정 데이터" },
   { href: "/admin/admins", label: "관리자 관리", superOnly: true },
 ];
@@ -20,7 +19,10 @@ export function AdminNav({ email, role }: { email: string; role: AdminRole }) {
   const router = useRouter();
 
   async function logout() {
-    await getBrowserSupabase().auth.signOut();
+    await Promise.allSettled([
+      getBrowserSupabase().auth.signOut(),
+      fetch("/api/admin/test-logout", { method: "POST" }),
+    ]);
     router.push("/admin/login");
     router.refresh();
   }

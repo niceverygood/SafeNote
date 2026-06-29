@@ -108,14 +108,15 @@ function JoinView({ onJoined }: { onJoined: (s: Session) => void }) {
     }
   }, []);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  const testEnabled = process.env.NEXT_PUBLIC_ENABLE_TEST_LOGIN === "true";
+
+  async function join(joinCode: string, workerName: string, workerPhone?: string) {
     setBusy(true);
     setError(null);
     const res = await fetch("/api/worker/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ join_code: code.trim(), name: name.trim(), phone: phone.trim() || undefined }),
+      body: JSON.stringify({ join_code: joinCode, name: workerName, phone: workerPhone }),
     });
     setBusy(false);
     const j = await res.json().catch(() => ({}));
@@ -124,6 +125,16 @@ function JoinView({ onJoined }: { onJoined: (s: Session) => void }) {
       return;
     }
     onJoined(j as Session);
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    await join(code.trim(), name.trim(), phone.trim() || undefined);
+  }
+
+  async function quickTest() {
+    const suffix = String(new Date().getMinutes() * 60 + new Date().getSeconds());
+    await join("TEST01", "테스터" + suffix);
   }
 
   return (
@@ -147,6 +158,19 @@ function JoinView({ onJoined }: { onJoined: (s: Session) => void }) {
           {busy ? "입장 중…" : "입장하기"}
         </button>
       </form>
+
+      {testEnabled && (
+        <div className="mt-4 border-t border-border pt-4">
+          <button
+            onClick={quickTest}
+            disabled={busy}
+            className={`${btn} border border-safe bg-safe/10 text-safe hover:bg-safe/20`}
+          >
+            테스트로 바로 시작
+          </button>
+          <p className="mt-2 text-center text-xs text-muted">예시 사업장(코드 TEST01)으로 즉시 체험합니다.</p>
+        </div>
+      )}
     </div>
   );
 }

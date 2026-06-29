@@ -26,7 +26,10 @@ export async function updateSession(req: NextRequest) {
 
   const path = req.nextUrl.pathname;
   const isProtected = path.startsWith("/admin") && path !== "/admin/login";
-  if (isProtected && !user) {
+  // 테스트 로그인 쿠키가 있으면 통과시키고, 실제 검증은 admin 레이아웃(getAdmin)이 수행
+  const hasTestCookie =
+    process.env.NEXT_PUBLIC_ENABLE_TEST_LOGIN === "true" && !!req.cookies.get("sn_test_admin");
+  if (isProtected && !user && !hasTestCookie) {
     const url = req.nextUrl.clone();
     url.pathname = "/admin/login";
     url.searchParams.set("next", path);

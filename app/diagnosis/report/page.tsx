@@ -167,26 +167,19 @@ function ReportView() {
         </p>
       )}
 
-      {/* 구독 전환 CTA (잠금 해제 후) */}
+      {/* 다음 단계 CTA (잠금 해제 후) */}
       {unlocked && (
         <section className="mt-8 rounded-lg border border-safe/30 bg-safe/5 p-6">
           <h2 className="text-base font-bold text-ink">공백을 닫고, 증빙을 상시 쌓으세요</h2>
           <p className="mt-1 text-sm text-muted">
-            위험성평가를 생성·확정하면 증빙이 사업장에 상시 축적됩니다. 구독 플랜으로
-            시작하세요.
+            위험성평가를 생성·확정하면 증빙이 사업장에 상시 축적됩니다.
           </p>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-4">
             <a
               href="/risk-assessment/new"
-              className="rounded-md bg-safe px-4 py-2 text-sm font-semibold text-white hover:bg-safe-hover"
+              className="inline-block rounded-md bg-safe px-4 py-2 text-sm font-semibold text-white hover:bg-safe-hover"
             >
               위험성평가 만들기
-            </a>
-            <a
-              href="/pricing"
-              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink hover:bg-surface"
-            >
-              요금제 보기
             </a>
           </div>
         </section>

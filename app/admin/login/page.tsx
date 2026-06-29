@@ -9,6 +9,21 @@ export default function AdminLoginPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [testBusy, setTestBusy] = useState(false);
+  const testEnabled = process.env.NEXT_PUBLIC_ENABLE_TEST_LOGIN === "true";
+
+  async function testLogin() {
+    setTestBusy(true);
+    setError(null);
+    const res = await fetch("/api/admin/test-login", { method: "POST" });
+    if (!res.ok) {
+      setTestBusy(false);
+      setError("테스트 로그인에 실패했습니다.");
+      return;
+    }
+    const next = new URLSearchParams(window.location.search).get("next") || "/admin";
+    window.location.href = next;
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,6 +80,19 @@ export default function AdminLoginPage() {
               {loading ? "전송 중…" : "로그인 링크 받기"}
             </button>
           </form>
+        )}
+
+        {testEnabled && !sent && (
+          <div className="mt-4 border-t border-border pt-4">
+            <button
+              onClick={testLogin}
+              disabled={testBusy}
+              className="w-full rounded-md border border-safe bg-safe/10 px-4 py-2.5 text-sm font-semibold text-safe transition-colors hover:bg-safe/20 disabled:opacity-60"
+            >
+              {testBusy ? "입장 중…" : "테스트 로그인 (사업장 관리자 체험)"}
+            </button>
+            <p className="mt-2 text-center text-xs text-muted">이메일 없이 바로 관리자 화면을 둘러봅니다.</p>
+          </div>
         )}
       </div>
       <Disclaimer className="mt-6 text-center" />
