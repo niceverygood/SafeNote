@@ -25,7 +25,7 @@ const KEY = "safenote_worker";
 const btn = "w-full rounded-lg px-4 py-3.5 text-base font-semibold transition-colors disabled:opacity-60";
 const field = "w-full rounded-lg border border-border bg-white px-4 py-3 text-base text-ink outline-none focus-visible:ring-2 focus-visible:ring-safe";
 
-type View = { v: "home" } | { v: "stage"; kind: StageKey } | { v: "report" };
+type View = { v: "home" } | { v: "stage"; kind: StageKey } | { v: "report" } | { v: "history" };
 
 export default function WorkerApp() {
   const [session, setSession] = useState<Session | null>(null);
@@ -78,6 +78,8 @@ export default function WorkerApp() {
         <HomeView session={session} go={setView} />
       ) : view.v === "stage" ? (
         <StageFlow session={session} kind={view.kind} back={() => setView({ v: "home" })} />
+      ) : view.v === "history" ? (
+        <HistoryView session={session} back={() => setView({ v: "home" })} />
       ) : (
         <ReportFlow session={session} back={() => setView({ v: "home" })} />
       )}
@@ -95,6 +97,16 @@ function JoinView({ onJoined }: { onJoined: (s: Session) => void }) {
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // QR 스캔으로 들어온 경우 ?code= 자동 입력
+  useEffect(() => {
+    try {
+      const c = new URLSearchParams(window.location.search).get("code");
+      if (c) setCode(c.toUpperCase());
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -205,6 +217,69 @@ function HomeView({ session, go }: { session: Session; go: (v: View) => void }) 
         위험 신고
         <span className="mt-0.5 block text-sm font-normal text-caution/80">위험한 상태를 발견하면 바로 알리세요</span>
       </button>
+
+      <button
+        onClick={() => go({ v: "history" })}
+        className="mt-3 w-full rounded-lg border border-border bg-white px-4 py-3 text-left text-sm font-medium text-ink hover:bg-surface"
+      >
+        내 점검·신고 기록 보기 ›
+      </button>
+    </div>
+  );
+}
+
+function HistoryView({ session, back }: { session: Session; back: () => void }) {
+  const [data, setData] = useState<{
+    checks: { id: string; kind: string; process: string; items: { checked: boolean }[]; created_at: string }[];
+    reports: { id: string; description: string; severity: string; status: string; created_at: string }[];
+  } | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/worker/history?workspace_id=${session.workspace_id}&worker_id=${session.worker_id}`)
+      .then((r) => r.json())
+      .then(setData)
+      .catch(() => setData({ checks: [], reports: [] }));
+  }, [session]);
+
+  return (
+    <div>
+      <button onClick={back} className="mb-3 text-sm text-muted">← 홈</button>
+      <h1 className="text-xl font-bold text-ink">내 기록</h1>
+      <p className="mt-1 text-sm text-muted">최근 점검과 위험 신고 내역입니다.</p>
+
+      <h2 className="mt-5 mb-2 text-sm font-semibold text-ink">점검</h2>
+      <div className="space-y-2">
+        {(data?.checks ?? []).map((c) => {
+          const st = stageOf(c.kind);
+          const items = Array.isArray(c.items) ? c.items : [];
+          return (
+            <div key={c.id} className="rounded-lg border border-border bg-white px-3 py-2.5 text-sm">
+              <div className="flex justify-between">
+                <span className="font-medium text-ink">{st?.short ?? c.kind} · {c.process}</span>
+                <span className="num text-xs text-muted">{kstTime(c.created_at)}</span>
+              </div>
+              <span className="num text-xs text-muted">체크 {items.filter((i) => i.checked).length}/{items.length}</span>
+            </div>
+          );
+        })}
+        {data && data.checks.length === 0 && <p className="text-sm text-muted">점검 기록이 없습니다.</p>}
+      </div>
+
+      <h2 className="mt-6 mb-2 text-sm font-semibold text-ink">위험 신고</h2>
+      <div className="space-y-2">
+        {(data?.reports ?? []).map((r) => (
+          <div key={r.id} className="rounded-lg border border-border bg-white px-3 py-2.5 text-sm">
+            <div className="flex justify-between">
+              <span className="text-ink">{r.description}</span>
+              <span className="num text-xs text-muted">{kstTime(r.created_at)}</span>
+            </div>
+            <span className={`text-xs ${r.status === "resolved" ? "text-safe" : "text-caution"}`}>
+              {r.status === "resolved" ? "조치완료" : "접수됨"}
+            </span>
+          </div>
+        ))}
+        {data && data.reports.length === 0 && <p className="text-sm text-muted">신고 기록이 없습니다.</p>}
+      </div>
     </div>
   );
 }
@@ -389,13 +464,51 @@ function ReportFlow({ session, back }: { session: Session; back: () => void }) {
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState<"low" | "medium" | "high">("medium");
   const [location, setLocation] = useState("");
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoBusy, setGeoBusy] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 6 * 1024 * 1024) {
+      setError("사진은 6MB 이하만 가능합니다.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  function attachLocation() {
+    if (!navigator.geolocation) return;
+    setGeoBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        setCoords({ lat: p.coords.latitude, lng: p.coords.longitude });
+        setGeoBusy(false);
+      },
+      () => setGeoBusy(false),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
+
   async function submit() {
     setBusy(true);
     setError(null);
+    let photoUrl: string | undefined;
+    if (photo) {
+      const up = await fetch("/api/worker/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspace_id: session.workspace_id, data: photo }),
+      });
+      const uj = await up.json().catch(() => ({}));
+      if (up.ok) photoUrl = uj.url;
+    }
     const res = await fetch("/api/worker/report", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -406,6 +519,9 @@ function ReportFlow({ session, back }: { session: Session; back: () => void }) {
         description,
         severity,
         location: location.trim() || undefined,
+        photo_url: photoUrl,
+        lat: coords?.lat,
+        lng: coords?.lng,
       }),
     });
     setBusy(false);
@@ -452,6 +568,23 @@ function ReportFlow({ session, back }: { session: Session; back: () => void }) {
             ))}
           </div>
         </div>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="flex cursor-pointer items-center justify-center rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-ink hover:bg-surface">
+            {photo ? "사진 변경" : "사진 첨부"}
+            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onPhoto} />
+          </label>
+          <button
+            type="button"
+            onClick={attachLocation}
+            className={`rounded-lg border px-3 py-2.5 text-sm ${coords ? "border-safe bg-safe/10 text-safe" : "border-border bg-white text-ink hover:bg-surface"}`}
+          >
+            {geoBusy ? "위치 확인 중…" : coords ? "위치 첨부됨" : "현재 위치 첨부"}
+          </button>
+        </div>
+        {photo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photo} alt="첨부 사진 미리보기" className="max-h-40 w-full rounded-lg border border-border object-cover" />
+        )}
         {error && <p className="text-sm text-danger">{error}</p>}
         <button disabled={busy || !description.trim()} onClick={submit} className={`${btn} bg-safe text-white hover:bg-safe-hover`}>
           {busy ? "전송 중…" : "신고 보내기"}

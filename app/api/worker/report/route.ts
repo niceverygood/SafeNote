@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { buildHash, lastHash } from "@/lib/hashchain";
+import { sendSms } from "@/lib/notify";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,9 @@ const Schema = z.object({
   description: z.string().min(1, "내용을 입력하세요.").max(1000),
   severity: z.enum(["low", "medium", "high"]).default("medium"),
   location: z.string().max(120).optional(),
+  photo_url: z.string().url().optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
 });
 
 export async function POST(req: Request) {
@@ -45,6 +49,9 @@ export async function POST(req: Request) {
       description: d.description,
       severity: d.severity,
       location: d.location ?? null,
+      photo_url: d.photo_url ?? null,
+      lat: d.lat ?? null,
+      lng: d.lng ?? null,
       status: "open",
       prev_hash: prev,
       hash,
@@ -54,5 +61,22 @@ export async function POST(req: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: "저장 실패" }, { status: 500 });
+
+  // 실시간 알림: 위험도 '높음'이면 관리자에게 SMS (키 없으면 스킵)
+  if (d.severity === "high") {
+    const { data: ws } = await db
+      .from("workspaces")
+      .select("name, notify_phone")
+      .eq("id", d.workspace_id)
+      .maybeSingle();
+    if (ws?.notify_phone) {
+      const loc = d.location ? ` (${d.location})` : "";
+      await sendSms(
+        ws.notify_phone,
+        `[세이프노트] ${ws.name} 위험 신고(높음)${loc}\n${d.worker_name}: ${d.description.slice(0, 60)}`
+      );
+    }
+  }
+
   return NextResponse.json({ ok: true, ...data });
 }

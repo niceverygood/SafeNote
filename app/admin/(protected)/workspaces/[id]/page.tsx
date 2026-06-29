@@ -1,7 +1,11 @@
 import Link from "next/link";
+import QRCode from "qrcode";
 import { getServiceSupabase } from "@/lib/supabase/server";
+import { HazardResolver } from "@/components/admin/HazardResolver";
 
 export const dynamic = "force-dynamic";
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://safe-note-roan.vercel.app";
 
 interface Workspace {
   id: string;
@@ -35,6 +39,8 @@ interface HazardReport {
   description: string;
   severity: string;
   status: string;
+  resolution: string | null;
+  photo_url: string | null;
   hash: string;
   created_at: string;
 }
@@ -112,7 +118,7 @@ export default async function WorkspaceDetailPage({
       .limit(20),
     db
       .from("hazard_reports")
-      .select("id, worker_name, location, description, severity, status, hash, created_at")
+      .select("id, worker_name, location, description, severity, status, resolution, photo_url, hash, created_at")
       .eq("workspace_id", params.id)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -120,6 +126,11 @@ export default async function WorkspaceDetailPage({
 
   const checks = (checkData ?? []) as SafetyCheck[];
   const hazards = (hazardData ?? []) as HazardReport[];
+
+  const joinUrl = `${SITE}/w?code=${workspace.join_code ?? ""}`;
+  const qrSvg = workspace.join_code
+    ? await QRCode.toString(joinUrl, { type: "svg", margin: 1, width: 132 })
+    : null;
 
   return (
     <div>
@@ -143,16 +154,26 @@ export default async function WorkspaceDetailPage({
         </Link>
       </div>
 
-      {/* 참여코드 — 노동자 입장 안내 */}
-      <div className="mt-6 rounded-lg border border-safe/30 bg-safe/5 p-5">
-        <div className="text-xs text-muted">참여코드</div>
-        <div className="mt-1 num text-3xl font-bold tracking-[0.2em] text-ink">
-          {workspace.join_code ?? "—"}
+      {/* 참여코드 + QR — 노동자 입장 안내 */}
+      <div className="mt-6 flex flex-col gap-4 rounded-lg border border-safe/30 bg-safe/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-xs text-muted">참여코드</div>
+          <div className="mt-1 num text-3xl font-bold tracking-[0.2em] text-ink">
+            {workspace.join_code ?? "—"}
+          </div>
+          <p className="mt-2 text-sm text-muted">
+            노동자는 세이프노트 <span className="num font-medium text-ink">/w</span> 에서 이 코드로
+            입장하거나, 아래 QR을 스캔하면 코드가 자동 입력됩니다.
+          </p>
         </div>
-        <p className="mt-2 text-sm text-muted">
-          노동자는 세이프노트 <span className="num font-medium text-ink">/w</span> 에서 이 코드로
-          입장합니다.
-        </p>
+        {qrSvg && (
+          <div className="shrink-0 rounded-md border border-border bg-white p-2">
+            <div
+              className="h-[132px] w-[132px] [&>svg]:h-full [&>svg]:w-full"
+              dangerouslySetInnerHTML={{ __html: qrSvg }}
+            />
+          </div>
+        )}
       </div>
 
       {/* 최근 안전점검 */}
@@ -237,20 +258,22 @@ export default async function WorkspaceDetailPage({
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {h.status === "open" ? (
-                      <span className="rounded border border-caution/40 bg-caution/10 px-2 py-0.5 text-xs text-caution">
-                        미해결
-                      </span>
-                    ) : (
-                      <span className="rounded border border-safe/40 bg-safe/10 px-2 py-0.5 text-xs text-safe">
-                        해결
-                      </span>
-                    )}
+                    <HazardResolver id={h.id} status={h.status} resolution={h.resolution} />
                   </td>
                   <td className="px-4 py-3 text-muted">
                     {h.description}
                     {h.location && (
                       <div className="text-xs text-muted">위치: {h.location}</div>
+                    )}
+                    {h.photo_url && (
+                      <a
+                        href={h.photo_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 inline-block text-xs font-medium text-safe hover:underline"
+                      >
+                        사진 보기
+                      </a>
                     )}
                   </td>
                   <td className="px-4 py-3 num text-xs text-muted">{shortHash(h.hash)}</td>
