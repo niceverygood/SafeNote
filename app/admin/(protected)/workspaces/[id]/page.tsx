@@ -135,6 +135,12 @@ export default async function WorkspaceDetailPage({
             {workspace.size_band} · 상시근로자 {workspace.worker_count}명
           </p>
         </div>
+        <Link
+          href={`/admin/workspaces/${params.id}/dashboard`}
+          className="shrink-0 rounded-md bg-safe px-4 py-2 text-sm font-semibold text-white hover:bg-safe-hover"
+        >
+          작업 전·중·후 점검 대시보드 →
+        </Link>
       </div>
 
       {/* 참여코드 — 노동자 입장 안내 */}
