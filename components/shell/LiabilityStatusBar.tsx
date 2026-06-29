@@ -31,8 +31,8 @@ export function LiabilityStatusBar() {
     }
   }, []);
 
-  // 관리자 콘솔에서는 공개 상태 바 숨김
-  if (pathname.startsWith("/admin")) return null;
+  // 관리자 콘솔·노동자 앱에서는 공개 상태 바 숨김
+  if (pathname.startsWith("/admin") || pathname.startsWith("/w")) return null;
 
   // 하이드레이션 불일치 방지: 클라이언트 측정 전에는 중립 상태로 렌더.
   const hasScore = ready && score !== null;

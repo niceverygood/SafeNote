@@ -31,8 +31,8 @@ export function SiteHeader() {
     }
   }, [pathname]);
 
-  // 관리자 콘솔은 자체 내비(AdminNav)를 쓰므로 공개 헤더 숨김
-  if (pathname.startsWith("/admin")) return null;
+  // 관리자 콘솔·노동자 앱은 자체 화면을 쓰므로 공개 헤더 숨김
+  if (pathname.startsWith("/admin") || pathname.startsWith("/w")) return null;
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
