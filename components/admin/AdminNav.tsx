@@ -19,10 +19,7 @@ export function AdminNav({ email, role }: { email: string; role: AdminRole }) {
   const router = useRouter();
 
   async function logout() {
-    await Promise.allSettled([
-      getBrowserSupabase().auth.signOut(),
-      fetch("/api/admin/test-logout", { method: "POST" }),
-    ]);
+    await getBrowserSupabase().auth.signOut();
     router.push("/admin/login");
     router.refresh();
   }

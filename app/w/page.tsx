@@ -92,56 +92,89 @@ export default function WorkerApp() {
 }
 
 function JoinView({ onJoined }: { onJoined: (s: Session) => void }) {
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // QR 스캔으로 들어온 경우 ?code= 자동 입력
+  // QR 스캔(?code=)이면 참여코드 등록 모드로 전환 + 자동 입력
   useEffect(() => {
     try {
       const c = new URLSearchParams(window.location.search).get("code");
-      if (c) setCode(c.toUpperCase());
+      if (c) {
+        setCode(c.toUpperCase());
+        setMode("register");
+      }
     } catch {
       /* ignore */
     }
   }, []);
 
-  const testEnabled = process.env.NEXT_PUBLIC_ENABLE_TEST_LOGIN === "true";
-
-  async function join(joinCode: string, workerName: string, workerPhone?: string) {
+  async function login(e: React.FormEvent) {
+    e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/worker/join", {
+    const res = await fetch("/api/worker/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ join_code: joinCode, name: workerName, phone: workerPhone }),
+      body: JSON.stringify({ username: username.trim(), password }),
     });
     setBusy(false);
     const j = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError(j.error || "입장에 실패했습니다.");
+      setError(j.error || "로그인에 실패했습니다.");
       return;
     }
     onJoined(j as Session);
   }
 
-  async function submit(e: React.FormEvent) {
+  async function register(e: React.FormEvent) {
     e.preventDefault();
-    await join(code.trim(), name.trim(), phone.trim() || undefined);
+    setBusy(true);
+    setError(null);
+    const res = await fetch("/api/worker/join", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ join_code: code.trim(), name: name.trim(), phone: phone.trim() || undefined }),
+    });
+    setBusy(false);
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(j.error || "등록에 실패했습니다.");
+      return;
+    }
+    onJoined(j as Session);
   }
 
-  async function quickTest() {
-    const suffix = String(new Date().getMinutes() * 60 + new Date().getSeconds());
-    await join("TEST01", "테스터" + suffix);
+  if (mode === "login") {
+    return (
+      <div>
+        <h1 className="text-xl font-bold text-ink">근로자 로그인</h1>
+        <p className="mt-1 text-sm text-muted">발급받은 아이디와 비밀번호로 로그인하세요.</p>
+        <form onSubmit={login} className="mt-6 space-y-3">
+          <input className={field} placeholder="아이디" value={username} onChange={(e) => setUsername(e.target.value)} autoCapitalize="none" required />
+          <input className={field} type="password" placeholder="비밀번호" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          {error && <p className="text-sm text-danger">{error}</p>}
+          <button type="submit" disabled={busy} className={`${btn} bg-safe text-white hover:bg-safe-hover`}>
+            {busy ? "로그인 중…" : "로그인"}
+          </button>
+          <button type="button" onClick={() => { setMode("register"); setError(null); }} className="w-full text-center text-xs text-muted hover:text-ink">
+            처음이신가요? 참여코드로 등록
+          </button>
+        </form>
+      </div>
+    );
   }
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-ink">현장 입장</h1>
-      <p className="mt-1 text-sm text-muted">사업장에서 받은 참여코드로 입장하세요. 가입은 필요 없습니다.</p>
-      <form onSubmit={submit} className="mt-6 space-y-3">
+      <h1 className="text-xl font-bold text-ink">참여코드로 등록</h1>
+      <p className="mt-1 text-sm text-muted">사업장에서 받은 참여코드로 현장에 등록합니다.</p>
+      <form onSubmit={register} className="mt-6 space-y-3">
         <input
           className={`${field} text-center text-lg font-semibold uppercase tracking-[0.3em]`}
           placeholder="참여코드"
@@ -155,22 +188,12 @@ function JoinView({ onJoined }: { onJoined: (s: Session) => void }) {
         <input className={field} placeholder="연락처 (선택)" value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
         {error && <p className="text-sm text-danger">{error}</p>}
         <button type="submit" disabled={busy} className={`${btn} bg-safe text-white hover:bg-safe-hover`}>
-          {busy ? "입장 중…" : "입장하기"}
+          {busy ? "등록 중…" : "등록하고 시작"}
+        </button>
+        <button type="button" onClick={() => { setMode("login"); setError(null); }} className="w-full text-center text-xs text-muted hover:text-ink">
+          아이디·비밀번호로 로그인
         </button>
       </form>
-
-      {testEnabled && (
-        <div className="mt-4 border-t border-border pt-4">
-          <button
-            onClick={quickTest}
-            disabled={busy}
-            className={`${btn} border border-safe bg-safe/10 text-safe hover:bg-safe/20`}
-          >
-            테스트로 바로 시작
-          </button>
-          <p className="mt-2 text-center text-xs text-muted">예시 사업장(코드 TEST01)으로 즉시 체험합니다.</p>
-        </div>
-      )}
     </div>
   );
 }
