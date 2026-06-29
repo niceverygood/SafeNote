@@ -2,6 +2,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { HazardResolver } from "@/components/admin/HazardResolver";
+import { WorkerAccountManager } from "@/components/admin/WorkerAccountManager";
 
 export const dynamic = "force-dynamic";
 
@@ -109,7 +110,7 @@ export default async function WorkspaceDetailPage({
     );
   }
 
-  const [{ data: checkData }, { data: hazardData }] = await Promise.all([
+  const [{ data: checkData }, { data: hazardData }, { data: workerData }] = await Promise.all([
     db
       .from("safety_checks")
       .select("id, worker_name, process, acknowledged, items, hash, created_at")
@@ -122,10 +123,16 @@ export default async function WorkspaceDetailPage({
       .eq("workspace_id", params.id)
       .order("created_at", { ascending: false })
       .limit(50),
+    db
+      .from("workers")
+      .select("id, name, username, created_at")
+      .eq("workspace_id", params.id)
+      .order("created_at", { ascending: false }),
   ]);
 
   const checks = (checkData ?? []) as SafetyCheck[];
   const hazards = (hazardData ?? []) as HazardReport[];
+  const workers = (workerData ?? []) as { id: string; name: string; username: string | null; created_at: string }[];
 
   const joinUrl = `${SITE}/w?code=${workspace.join_code ?? ""}`;
   const qrSvg = workspace.join_code
@@ -175,6 +182,17 @@ export default async function WorkspaceDetailPage({
           </div>
         )}
       </div>
+
+      {/* 근로자 계정 발급 */}
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold text-ink">근로자 계정</h2>
+        <p className="mt-1 text-xs text-muted">
+          근로자에게 아이디·비밀번호를 발급하면 세이프노트 <span className="num">/w</span> 에서 로그인해 점검·신고할 수 있습니다.
+        </p>
+        <div className="mt-3">
+          <WorkerAccountManager workspaceId={workspace.id} workers={workers} />
+        </div>
+      </section>
 
       {/* 최근 안전점검 */}
       <section className="mt-8">
