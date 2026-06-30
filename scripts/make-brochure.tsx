@@ -305,9 +305,9 @@ const Doc = (
     <Page size="A4" style={s.page}>
       <Text style={s.eyebrow}>CORE FEATURES</Text>
       <View style={s.rule} />
-      <Text style={s.h2}>두 개의 핵심 모듈</Text>
+      <Text style={s.h2}>세 개의 핵심 축</Text>
 
-      <View style={[s.card, { marginBottom: 14 }]}>
+      <View style={[s.card, { marginBottom: 10 }]}>
         <Text style={s.chip}>모듈 A</Text>
         <Text style={[s.h3, { marginTop: 8 }]}>면책 자가진단</Text>
         <Text style={[s.body, s.muted, { marginBottom: 8 }]}>
@@ -319,7 +319,7 @@ const Doc = (
         <Bullet>갭 리포트 — 핵심 공백을 닫는 우선순위</Bullet>
       </View>
 
-      <View style={s.card}>
+      <View style={[s.card, { marginBottom: 10 }]}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
             <Text style={s.chip}>모듈 B</Text>
@@ -335,6 +335,17 @@ const Doc = (
         <Bullet>확정 시 디지털 직인 → ‘초안’이 ‘공식 증빙’으로</Bullet>
         <Bullet>감독관 제출 가능한 공문서 품질 PDF 내보내기</Bullet>
       </View>
+
+      <View style={s.card}>
+        <Text style={s.chip}>모듈 C</Text>
+        <Text style={[s.h3, { marginTop: 8 }]}>노동자 앱 · 현장 증빙</Text>
+        <Text style={[s.body, s.muted, { marginBottom: 8 }]}>
+          근로자가 아이디·비밀번호로 로그인해 작업 전·중·후 안전점검과 위험 신고(사진·위치)를
+          기록합니다. 모든 기록은 시각과 함께 위변조 방지(해시 체인)로 저장됩니다.
+        </Text>
+        <Bullet>작업 전·중·후 점검 — 노동자 보호 활동이 곧 면책 증빙</Bullet>
+        <Bullet>위험 신고 → 관리자 실시간 통지·조치완료 기록</Bullet>
+      </View>
       <Footer page="03 · 핵심 기능" />
     </Page>
 
@@ -347,9 +358,9 @@ const Doc = (
       <View style={{ marginTop: 6 }}>
         {[
           ["진단", "업종·규모·서류를 체크하면 면책 상태와 공백이 보입니다."],
-          ["생성", "공정별 위험성평가표를 근거 인용과 함께 초안으로 받습니다."],
-          ["확정", "위험도를 직접 정하고 확정하면 디지털 직인이 찍힙니다."],
-          ["축적", "확정 증빙이 사업장에 상시 보관·관리됩니다."],
+          ["생성·확정", "공정별 위험성평가표를 근거 인용과 함께 받고, 위험도를 정해 직인으로 확정합니다."],
+          ["현장 점검", "근로자가 작업 전·중·후 점검·위험 신고를 기록합니다(시각·불변 로그)."],
+          ["축적·관제", "확정 증빙이 상시 쌓이고, 관리자는 점검 현황을 대시보드로 한눈에 봅니다."],
         ].map(([t, d], i) => (
           <View key={t} style={{ flexDirection: "row", marginBottom: 12, alignItems: "flex-start" }}>
             <View
@@ -384,79 +395,34 @@ const Doc = (
       <Footer page="04 · 작동 방식" />
     </Page>
 
-    {/* 6. 요금제 (구독) */}
+    {/* 6. 현장 증빙 · 관제 */}
     <Page size="A4" style={s.page}>
-      <Text style={s.eyebrow}>PRICING · 구독제</Text>
+      <Text style={s.eyebrow}>FIELD EVIDENCE · 관제</Text>
       <View style={s.rule} />
-      <Text style={s.h2}>사업장 규모에 맞는 구독 플랜</Text>
-      <Text style={[s.body, s.muted, { marginBottom: 16 }]}>
-        진단은 무료로 시작하고, 증빙을 상시 쌓는 단계부터 구독합니다. (아래 금액은 제안
-        예시이며 정책에 따라 조정될 수 있습니다.)
+      <Text style={s.h2}>현장 증빙과 관리자 대시보드</Text>
+      <Text style={[s.body, s.muted, { marginBottom: 14 }]}>
+        노동자의 안전 행동이 실시간으로 기록되고, 관리자는 그 이행 현황을 한눈에 봅니다.
+        노동자에게 책임을 전가하지 않고, ‘경영책임자의 의무 이행’을 입증하도록 설계했습니다.
       </Text>
 
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        {[
-          {
-            name: "무료 진단",
-            price: "0원",
-            unit: "",
-            feats: ["면책 자가진단", "갭 리포트 요약", "리스크 등급 확인"],
-            hi: false,
-          },
-          {
-            name: "스탠다드",
-            price: "49,000원",
-            unit: "/ 월",
-            feats: ["위험성평가 생성·확정", "공정 5개", "증빙 보관·PDF", "반기 점검 알림"],
-            hi: true,
-          },
-          {
-            name: "프로",
-            price: "99,000원",
-            unit: "/ 월",
-            feats: ["공정 무제한", "전 모듈 이용", "증빙 대장 관리", "우선 지원"],
-            hi: false,
-          },
-        ].map((p) => (
-          <View
-            key={p.name}
-            style={[
-              s.card,
-              { flex: 1, paddingVertical: 18 },
-              p.hi ? { borderColor: C.safe, borderWidth: 2, backgroundColor: "#15643E0A" } : {},
-            ]}
-          >
-            {p.hi ? (
-              <Text style={[s.chip, { marginBottom: 6 }]}>추천</Text>
-            ) : (
-              <View style={{ height: 0 }} />
-            )}
-            <Text style={s.h3}>{p.name}</Text>
-            <View style={{ flexDirection: "row", alignItems: "flex-end", marginVertical: 6 }}>
-              <Text style={{ fontSize: 20, fontWeight: 800, color: p.hi ? C.safe : C.ink }}>
-                {p.price}
-              </Text>
-              <Text style={[s.muted, { fontSize: 9, marginLeft: 3, marginBottom: 2 }]}>{p.unit}</Text>
-            </View>
-            <View style={{ height: 1, backgroundColor: C.border, marginVertical: 8 }} />
-            {p.feats.map((f) => (
-              <View key={f} style={{ flexDirection: "row", marginBottom: 5 }}>
-                <Text style={{ color: C.safe, fontSize: 9.5, marginRight: 5 }}>✓</Text>
-                <Text style={{ fontSize: 9.5, flex: 1 }}>{f}</Text>
-              </View>
-            ))}
-          </View>
-        ))}
+      <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
+        <View style={[s.card, { flex: 1 }]}>
+          <Text style={s.h3}>작업 전·중·후 점검 현황</Text>
+          <Text style={[s.body, s.muted]}>작업자 × 단계 매트릭스로 누가 언제 점검했는지 시각까지 한눈에. 미점검자도 즉시 식별.</Text>
+        </View>
+        <View style={[s.card, { flex: 1 }]}>
+          <Text style={s.h3}>위험 신고 → 조치완료</Text>
+          <Text style={[s.body, s.muted]}>현장 위험 신고를 실시간 통지받고, 관리자가 ‘조치완료’로 종결해 발견-개선 루프를 남깁니다.</Text>
+        </View>
       </View>
 
-      <View style={[s.card, { marginTop: 14 }]}>
-        <Text style={s.h3}>대행·다중 사업장</Text>
-        <Text style={[s.body, s.muted]}>
-          노무·안전 대행, 다중 사업장 관리가 필요하면 엔터프라이즈 플랜으로 별도
-          문의해 주세요.
-        </Text>
+      <View style={s.card}>
+        <Text style={s.h3}>신뢰의 핵심 — 불변 증빙 · 본인성</Text>
+        <Bullet>모든 현장 기록에 타임스탬프 + 해시 체인 → 사후 위변조 감지</Bullet>
+        <Bullet>근로자는 관리자가 발급한 아이디·비밀번호로 본인 명의 점검·서명</Bullet>
+        <Bullet>관리자 화면에서 근로자 계정 직접 발급·비번 재설정</Bullet>
       </View>
-      <Footer page="05 · 요금제" />
+      <Footer page="05 · 현장 증빙" />
     </Page>
 
     {/* 7. CTA */}
@@ -467,8 +433,8 @@ const Doc = (
           무서운 의무를,{"\n"}관리 가능한 증빙으로.
         </Text>
         <Text style={[s.body, s.muted, { textAlign: "center", maxWidth: 360, marginBottom: 28 }]}>
-          가입 없이 5분, 우리 사업장의 증빙 갭을 먼저 확인해 보세요. 그다음 구독으로
-          증빙을 상시 쌓습니다.
+          가입 없이 5분, 우리 사업장의 증빙 갭을 먼저 확인해 보세요. 그리고 현장에서
+          증빙을 상시 쌓아갑니다.
         </Text>
         <View
           style={{
