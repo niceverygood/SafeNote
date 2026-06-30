@@ -17,3 +17,9 @@ next-env.d.ts
 *.keystore
 *.aab
 *.apk
+
+# Capacitor iOS — 빌드 산출물 제외(프로젝트는 커밋)
+/ios/App/build/
+/ios/DerivedData/
+/ios/App/Pods/
+/ios/App/App/public/

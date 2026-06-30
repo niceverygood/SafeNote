@@ -12,8 +12,8 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const db = createClient(url, key, { auth: { persistSession: false } });
 
-const MANAGER = { email: "manager@safenote.test", password: "safenote-manager-2026" };
-const WORKER = { username: "worker1", password: "safenote-worker-2026", name: "테스트작업자" };
+const MANAGER = { email: "test@test.com", password: "test1234" };
+const WORKER = { username: "test", password: "test1234", name: "테스터" };
 
 function hashPassword(pw: string) {
   const salt = randomBytes(16).toString("hex");
