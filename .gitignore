@@ -9,3 +9,11 @@
 .vercel
 *.tsbuildinfo
 next-env.d.ts
+
+# TWA (Bubblewrap) — 생성 산출물·서명키는 커밋 금지 (twa-manifest.json·README만 유지)
+/twa/*
+!/twa/twa-manifest.json
+!/twa/README.md
+*.keystore
+*.aab
+*.apk
