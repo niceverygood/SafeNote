@@ -13,6 +13,7 @@ import {
   Font,
   Svg,
   Circle,
+  Image,
   renderToFile,
 } from "@react-pdf/renderer";
 import { join } from "node:path";
@@ -425,6 +426,55 @@ const Doc = (
       <Footer page="05 · 현장 증빙" />
     </Page>
 
+    {/* 6.5 웹 화면 */}
+    <Page size="A4" style={s.page}>
+      <Text style={s.eyebrow}>PRODUCT · 웹 (관리자)</Text>
+      <View style={s.rule} />
+      <Text style={s.h2}>웹 — 진단·관제 화면</Text>
+      <Text style={[s.body, s.muted, { marginBottom: 14 }]}>
+        대표·관리자는 브라우저에서 면책 진단, 위험성평가, 작업 전·중·후 점검 현황을 관리합니다.
+      </Text>
+
+      <View style={{ alignItems: "center" }}>
+        <View style={{ width: 450, borderWidth: 1, borderColor: C.border, borderRadius: 8, overflow: "hidden" }}>
+          <Image src={join(process.cwd(), "docs/store/web-landing.png")} style={{ width: 450 }} />
+        </View>
+        <Text style={[s.muted, { fontSize: 8.5, marginTop: 5, marginBottom: 14 }]}>랜딩 — 중대재해처벌법 면책 증빙 시스템</Text>
+
+        <View style={{ width: 450, borderWidth: 1, borderColor: C.border, borderRadius: 8, overflow: "hidden" }}>
+          <Image src={join(process.cwd(), "docs/store/web-dashboard.png")} style={{ width: 450 }} />
+        </View>
+        <Text style={[s.muted, { fontSize: 8.5, marginTop: 5 }]}>작업 전·중·후 점검 현황 대시보드 (시각·증빙해시)</Text>
+      </View>
+      <Footer page="06 · 웹 화면" />
+    </Page>
+
+    {/* 6.6 앱 화면 */}
+    <Page size="A4" style={s.page}>
+      <Text style={s.eyebrow}>PRODUCT · 앱 (근로자)</Text>
+      <View style={s.rule} />
+      <Text style={s.h2}>앱 — 현장 근로자 화면</Text>
+      <Text style={[s.body, s.muted, { marginBottom: 16 }]}>
+        근로자는 모바일에서 작업 전·중·후 점검과 위험 신고(사진·위치)를 간단히 기록합니다.
+      </Text>
+
+      <View style={{ flexDirection: "row", justifyContent: "center", gap: 12 }}>
+        {[
+          ["screenshot-1.png", "작업 전·중·후 점검"],
+          ["screenshot-2.png", "위험 신고(사진·위치)"],
+          ["screenshot-3.png", "점검 현황 한눈에"],
+        ].map(([f, cap]) => (
+          <View key={f} style={{ width: 150, alignItems: "center" }}>
+            <View style={{ width: 150, borderWidth: 1, borderColor: C.border, borderRadius: 10, overflow: "hidden" }}>
+              <Image src={join(process.cwd(), "docs/store", f as string)} style={{ width: 150 }} />
+            </View>
+            <Text style={[s.muted, { fontSize: 8.5, marginTop: 6 }]}>{cap}</Text>
+          </View>
+        ))}
+      </View>
+      <Footer page="07 · 앱 화면" />
+    </Page>
+
     {/* 7. CTA */}
     <Page size="A4" style={s.page}>
       <View style={{ marginTop: 150, alignItems: "center" }}>
@@ -452,7 +502,7 @@ const Doc = (
           세이프노트 · safe-note-roan.vercel.app
         </Text>
       </View>
-      <Footer page="06 · 시작하기" />
+      <Footer page="08 · 시작하기" />
     </Page>
   </Document>
 );
