@@ -121,7 +121,13 @@ export default function LandingPage() {
             면책 상태 진단 시작
           </Link>
         </div>
-        <Disclaimer className="mt-8" />
+        <div className="mt-8 flex items-center gap-3">
+          <Disclaimer />
+          <span className="text-muted">·</span>
+          <Link href="/privacy" className="text-xs text-muted hover:text-ink">
+            개인정보 처리방침
+          </Link>
+        </div>
       </section>
     </div>
   );
