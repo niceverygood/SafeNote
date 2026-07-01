@@ -3,6 +3,8 @@ import QRCode from "qrcode";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { HazardResolver } from "@/components/admin/HazardResolver";
 import { WorkerAccountManager } from "@/components/admin/WorkerAccountManager";
+import { ManagerCreator } from "@/components/admin/ManagerCreator";
+import { requireWorkspaceAccess } from "@/lib/adminGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +92,7 @@ export default async function WorkspaceDetailPage({
 }: {
   params: { id: string };
 }) {
+  const admin = await requireWorkspaceAccess(params.id);
   const db = getServiceSupabase();
 
   const { data: ws } = await db
@@ -141,9 +144,11 @@ export default async function WorkspaceDetailPage({
 
   return (
     <div>
-      <Link href="/admin/workspaces" className="text-sm text-safe hover:underline">
-        ← 사업장 목록
-      </Link>
+      {admin.role === "super" && (
+        <Link href="/admin/workspaces" className="text-sm text-safe hover:underline">
+          ← 사업장 목록
+        </Link>
+      )}
 
       <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -182,6 +187,17 @@ export default async function WorkspaceDetailPage({
           </div>
         )}
       </div>
+
+      {/* 관리자 계정 발급 (총괄관리자 전용) */}
+      {admin.role === "super" && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold text-ink">관리자 계정 (총괄관리자 전용)</h2>
+          <p className="mt-1 text-xs text-muted">이 사업장을 관리할 고객 관리자 계정을 발급합니다.</p>
+          <div className="mt-3">
+            <ManagerCreator workspaceId={workspace.id} />
+          </div>
+        </section>
+      )}
 
       {/* 근로자 계정 발급 */}
       <section className="mt-8">

@@ -1,8 +1,10 @@
 import { getServiceSupabase } from "@/lib/supabase/server";
+import { requireSuper } from "@/lib/adminGuard";
 
 export const dynamic = "force-dynamic";
 
 export default async function RulesPage() {
+  await requireSuper();
   const db = getServiceSupabase();
   const [{ data: obligations }, { data: hazards }, { data: industries }] = await Promise.all([
     db.from("obligations").select("code, title, required_evidence, sort_order").order("sort_order"),

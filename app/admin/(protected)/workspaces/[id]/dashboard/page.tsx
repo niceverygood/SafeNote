@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { STAGES, kstTodayStartISO, kstTime, type StageKey } from "@/lib/stages";
+import { requireWorkspaceAccess } from "@/lib/adminGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ interface CheckRow {
 type Cell = { at: string; checked: number; total: number; ack: boolean; hash: string; process: string | null } | null;
 
 export default async function WorkspaceDashboard({ params }: { params: { id: string } }) {
+  await requireWorkspaceAccess(params.id);
   const db = getServiceSupabase();
   const start = kstTodayStartISO();
 

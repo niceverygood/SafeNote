@@ -1,5 +1,7 @@
+import { redirect } from "next/navigation";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { LiabilityGauge } from "@/components/ds/LiabilityGauge";
+import { getAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +44,11 @@ function Stat({ label, value, sub }: { label: string; value: string | number; su
 }
 
 export default async function AdminOverviewPage() {
+  // 관리자(고객)는 개요(플랫폼 전체) 접근 불가 → 자기 사업장으로
+  const admin = await getAdmin();
+  if (admin && admin.role !== "super") {
+    redirect(admin.workspaceId ? `/admin/workspaces/${admin.workspaceId}` : "/admin/no-workspace");
+  }
   const c = await counts();
   return (
     <div>

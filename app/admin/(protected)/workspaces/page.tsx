@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { WorkspaceCreator } from "@/components/admin/WorkspaceCreator";
+import { requireSuper } from "@/lib/adminGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,7 @@ async function countFor(
 }
 
 export default async function WorkspacesPage() {
+  await requireSuper();
   const db = getServiceSupabase();
   const { data } = await db
     .from("workspaces")

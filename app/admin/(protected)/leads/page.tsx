@@ -1,6 +1,7 @@
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { RiskChip } from "@/components/ds/StatusChip";
 import { exposureFromScore } from "@/lib/status";
+import { requireSuper } from "@/lib/adminGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ function fmt(d: string) {
 }
 
 export default async function LeadsPage() {
+  await requireSuper();
   const db = getServiceSupabase();
   const { data } = await db
     .from("diagnoses")

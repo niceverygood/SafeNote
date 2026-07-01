@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getServiceSupabase } from "@/lib/supabase/server";
+import { requireSuper } from "@/lib/adminGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ function fmt(d: string | null) {
 }
 
 export default async function RiskPage() {
+  await requireSuper();
   const db = getServiceSupabase();
   const { data } = await db
     .from("risk_assessments")

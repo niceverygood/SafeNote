@@ -5,16 +5,24 @@ import { usePathname, useRouter } from "next/navigation";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 import type { AdminRole } from "@/lib/admin";
 
-const LINKS: { href: string; label: string; superOnly?: boolean }[] = [
+const SUPER_LINKS: { href: string; label: string }[] = [
   { href: "/admin", label: "개요" },
   { href: "/admin/leads", label: "리드·진단" },
   { href: "/admin/risk", label: "위험성평가" },
   { href: "/admin/workspaces", label: "사업장" },
   { href: "/admin/rules", label: "규정 데이터" },
-  { href: "/admin/admins", label: "관리자 관리", superOnly: true },
+  { href: "/admin/admins", label: "관리자 관리" },
 ];
 
-export function AdminNav({ email, role }: { email: string; role: AdminRole }) {
+export function AdminNav({
+  email,
+  role,
+  workspaceId,
+}: {
+  email: string;
+  role: AdminRole;
+  workspaceId: string | null;
+}) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -24,7 +32,16 @@ export function AdminNav({ email, role }: { email: string; role: AdminRole }) {
     router.refresh();
   }
 
-  const visible = LINKS.filter((l) => !l.superOnly || role === "super");
+  // 총괄=전체 메뉴, 관리자=자기 사업장 메뉴
+  const visible =
+    role === "super"
+      ? SUPER_LINKS
+      : workspaceId
+        ? [
+            { href: `/admin/workspaces/${workspaceId}`, label: "우리 사업장" },
+            { href: `/admin/workspaces/${workspaceId}/dashboard`, label: "점검 현황" },
+          ]
+        : [];
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-white">
@@ -52,7 +69,8 @@ export function AdminNav({ email, role }: { email: string; role: AdminRole }) {
         {/* 하단: 가로 스크롤 탭 (모바일 대응) */}
         <nav className="-mx-1 flex gap-1 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {visible.map((l) => {
-            const active = l.href === "/admin" ? pathname === "/admin" : pathname.startsWith(l.href);
+            const isExact = l.href === "/admin" || /\/workspaces\/[0-9a-f-]{36}$/.test(l.href);
+            const active = isExact ? pathname === l.href : pathname.startsWith(l.href);
             return (
               <Link
                 key={l.href}
