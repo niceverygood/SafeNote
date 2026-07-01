@@ -1,5 +1,5 @@
 {
-  "packageId": "kr.bottlecorp.safenote",
+  "packageId": "com.timart.safenote",
   "host": "safe-note-roan.vercel.app",
   "name": "세이프노트",
   "launcherName": "세이프노트",
@@ -20,8 +20,8 @@
     "path": "./android-upload.keystore",
     "alias": "safenote"
   },
-  "appVersionName": "SafeNote",
-  "appVersionCode": 2,
+  "appVersionName": "1.0.3",
+  "appVersionCode": 4,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://safe-note-roan.vercel.app/manifest.webmanifest",
@@ -40,5 +40,5 @@
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
   "displayOverride": [],
-  "appVersion": "SafeNote"
+  "appVersion": "1.0.3"
 }

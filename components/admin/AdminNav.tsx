@@ -24,44 +24,48 @@ export function AdminNav({ email, role }: { email: string; role: AdminRole }) {
     router.refresh();
   }
 
+  const visible = LINKS.filter((l) => !l.superOnly || role === "super");
+
   return (
-    <header className="border-b border-border bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-6">
+    <header className="sticky top-0 z-30 border-b border-border bg-white">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        {/* 상단: 로고 + 계정/로그아웃 */}
+        <div className="flex items-center justify-between gap-2 py-2.5">
           <Link href="/admin" className="text-sm font-bold text-ink">
             세이프노트 <span className="text-safe">Admin</span>
           </Link>
-          <nav className="flex items-center gap-1">
-            {LINKS.filter((l) => !l.superOnly || role === "super").map((l) => {
-              const active = l.href === "/admin" ? pathname === "/admin" : pathname.startsWith(l.href);
-              return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                    active ? "bg-safe/10 font-semibold text-safe" : "text-muted hover:text-ink"
-                  }`}
-                >
-                  {l.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden text-xs text-muted sm:inline">
-            {email}
-            <span className="ml-2 rounded border border-border px-1.5 py-0.5 num text-[10px] uppercase">
-              {role === "super" ? "총괄관리자" : "관리자"}
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="hidden min-w-0 items-center gap-1.5 truncate text-xs text-muted sm:flex">
+              <span className="num truncate">{email}</span>
+              <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px]">
+                {role === "super" ? "총괄관리자" : "관리자"}
+              </span>
             </span>
-          </span>
-          <button
-            onClick={logout}
-            className="rounded-md border border-border px-3 py-1.5 text-sm text-ink hover:bg-surface"
-          >
-            로그아웃
-          </button>
+            <button
+              onClick={logout}
+              className="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm text-ink hover:bg-surface"
+            >
+              로그아웃
+            </button>
+          </div>
         </div>
+        {/* 하단: 가로 스크롤 탭 (모바일 대응) */}
+        <nav className="-mx-1 flex gap-1 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {visible.map((l) => {
+            const active = l.href === "/admin" ? pathname === "/admin" : pathname.startsWith(l.href);
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition-colors ${
+                  active ? "bg-safe/10 font-semibold text-safe" : "text-muted hover:text-ink"
+                }`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </header>
   );

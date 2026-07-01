@@ -36,8 +36,8 @@ export default async function ProtectedAdminLayout({
   return (
     <div className="min-h-dvh bg-surface">
       <AdminNav email={admin.email} role={admin.role} />
-      <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
-      <footer className="mx-auto max-w-6xl px-6 pb-10">
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+      <footer className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
         <Disclaimer />
       </footer>
     </div>
