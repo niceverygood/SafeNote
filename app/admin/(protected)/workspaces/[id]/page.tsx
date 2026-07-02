@@ -5,6 +5,8 @@ import { HazardResolver } from "@/components/admin/HazardResolver";
 import { WorkerAccountManager } from "@/components/admin/WorkerAccountManager";
 import { ManagerCreator } from "@/components/admin/ManagerCreator";
 import { NoticeManager } from "@/components/admin/NoticeManager";
+import { TrainingManager } from "@/components/admin/TrainingManager";
+import { BudgetManager, type BudgetItemRow, type BudgetExecRow } from "@/components/admin/BudgetManager";
 import { requireWorkspaceAccess } from "@/lib/adminGuard";
 
 export const dynamic = "force-dynamic";
@@ -158,6 +160,69 @@ export default async function WorkspaceDetailPage({
     ackCount: ackCount.get(n.id as string) ?? 0,
   }));
 
+  // 교육 + 이수 서명 수
+  const [{ data: trainingData }, { data: tackData }] = await Promise.all([
+    db
+      .from("trainings")
+      .select("id, title, training_type, material_url, created_at")
+      .eq("workspace_id", params.id)
+      .order("created_at", { ascending: false })
+      .limit(30),
+    db.from("training_acks").select("training_id").eq("workspace_id", params.id),
+  ]);
+  const tackCount = new Map<string, number>();
+  for (const a of tackData ?? []) {
+    const k = a.training_id as string;
+    tackCount.set(k, (tackCount.get(k) ?? 0) + 1);
+  }
+  const trainings = (trainingData ?? []).map((t) => ({
+    id: t.id as string,
+    title: t.title as string,
+    training_type: t.training_type as string,
+    material_url: (t.material_url as string) ?? null,
+    created_at: t.created_at as string,
+    ackCount: tackCount.get(t.id as string) ?? 0,
+  }));
+
+  // 예산 편성 항목 + 집행 내역
+  const [{ data: budgetItemData }, { data: budgetExecData }] = await Promise.all([
+    db
+      .from("budget_items")
+      .select("id, year, category, label, planned_amount")
+      .eq("workspace_id", params.id)
+      .order("year", { ascending: false })
+      .order("created_at", { ascending: false }),
+    db
+      .from("budget_executions")
+      .select("id, budget_item_id, amount, note, receipt_url, hash, created_at")
+      .eq("workspace_id", params.id)
+      .order("created_at", { ascending: false })
+      .limit(200),
+  ]);
+  const executedByItem = new Map<string, number>();
+  for (const ex of budgetExecData ?? []) {
+    const k = ex.budget_item_id as string;
+    executedByItem.set(k, (executedByItem.get(k) ?? 0) + Number(ex.amount));
+  }
+  const budgetItems: BudgetItemRow[] = (budgetItemData ?? []).map((b) => ({
+    id: b.id as string,
+    year: b.year as number,
+    category: b.category as string,
+    label: b.label as string,
+    planned_amount: Number(b.planned_amount),
+    executed: executedByItem.get(b.id as string) ?? 0,
+  }));
+  const budgetLabel = new Map(budgetItems.map((b) => [b.id, b.label]));
+  const budgetExecs: BudgetExecRow[] = (budgetExecData ?? []).slice(0, 30).map((ex) => ({
+    id: ex.id as string,
+    itemLabel: budgetLabel.get(ex.budget_item_id as string) ?? "(삭제된 항목)",
+    amount: Number(ex.amount),
+    note: (ex.note as string) ?? null,
+    receipt_url: (ex.receipt_url as string) ?? null,
+    hash: ex.hash as string,
+    created_at: ex.created_at as string,
+  }));
+
   const checks = (checkData ?? []) as SafetyCheck[];
   const hazards = (hazardData ?? []) as HazardReport[];
   const workers = (workerData ?? []) as { id: string; name: string; username: string | null; created_at: string }[];
@@ -248,6 +313,28 @@ export default async function WorkspaceDetailPage({
         </p>
         <div className="mt-3">
           <NoticeManager workspaceId={workspace.id} notices={notices} workerTotal={workers.length} />
+        </div>
+      </section>
+
+      {/* 안전보건교육 */}
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold text-ink">안전보건교육 이수 관리</h2>
+        <p className="mt-1 text-xs text-muted">
+          정기·채용 시·특별교육을 배포하고, 근로자 이수 서명을 교육 실시 증빙(제5조·산안법 29조)으로 남깁니다.
+        </p>
+        <div className="mt-3">
+          <TrainingManager workspaceId={workspace.id} trainings={trainings} workerTotal={workers.length} />
+        </div>
+      </section>
+
+      {/* 안전보건 예산 */}
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold text-ink">안전보건 예산 편성·집행 대장</h2>
+        <p className="mt-1 text-xs text-muted">
+          예산을 편성하고 집행 내역을 영수증과 함께 불변 기록으로 남깁니다(시행령 4조 4호).
+        </p>
+        <div className="mt-3">
+          <BudgetManager workspaceId={workspace.id} items={budgetItems} executions={budgetExecs} />
         </div>
       </section>
 

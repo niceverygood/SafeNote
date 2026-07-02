@@ -19,7 +19,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /** 해당 워크스페이스의 마지막 기록 hash를 가져옴(체인 연결용) */
 export async function lastHash(
   db: SupabaseClient,
-  table: "safety_checks" | "hazard_reports" | "notice_acks",
+  table:
+    | "safety_checks"
+    | "hazard_reports"
+    | "notice_acks"
+    | "ppe_issues"
+    | "semiannual_reviews"
+    | "incident_events"
+    | "budget_executions"
+    | "training_acks",
   workspaceId: string
 ): Promise<string | null> {
   const { data } = await db

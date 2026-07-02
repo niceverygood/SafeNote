@@ -91,6 +91,40 @@ export default function WorkerApp() {
   );
 }
 
+/** 데모·소개용 임시 테스트 로그인 — NEXT_PUBLIC_ENABLE_TEST_LOGIN=true 일 때만 노출 */
+function DemoWorkerLogin({ onJoined }: { onJoined: (s: Session) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (process.env.NEXT_PUBLIC_ENABLE_TEST_LOGIN !== "true") return null;
+
+  async function login() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch("/api/demo/login", { method: "POST" });
+    const j = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) {
+      setError(j.error || "테스트 로그인에 실패했습니다.");
+      return;
+    }
+    onJoined(j as Session);
+  }
+
+  return (
+    <div className="mt-4">
+      <button
+        type="button"
+        onClick={login}
+        disabled={busy}
+        className="w-full rounded-lg border border-dashed border-caution/60 bg-caution/5 px-4 py-3 text-sm font-semibold text-caution hover:bg-caution/10 disabled:opacity-60"
+      >
+        {busy ? "로그인 중…" : "테스트 로그인 (근로자) — 데모용"}
+      </button>
+      {error && <p className="mt-2 text-center text-xs text-danger">{error}</p>}
+    </div>
+  );
+}
+
 function JoinView({ onJoined }: { onJoined: (s: Session) => void }) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
@@ -166,6 +200,7 @@ function JoinView({ onJoined }: { onJoined: (s: Session) => void }) {
             처음이신가요? 참여코드로 등록
           </button>
         </form>
+        <DemoWorkerLogin onJoined={onJoined} />
       </div>
     );
   }
@@ -194,6 +229,7 @@ function JoinView({ onJoined }: { onJoined: (s: Session) => void }) {
           아이디·비밀번호로 로그인
         </button>
       </form>
+      <DemoWorkerLogin onJoined={onJoined} />
     </div>
   );
 }
@@ -271,6 +307,86 @@ function NoticesSection({ session }: { session: Session }) {
   );
 }
 
+interface TrainingItem {
+  id: string;
+  title: string;
+  body: string;
+  training_type: string;
+  material_url: string | null;
+  created_at: string;
+  acked_at: string | null;
+}
+
+const TRAINING_TYPE_LABEL: Record<string, string> = {
+  regular: "정기교육",
+  onboarding: "채용 시 교육",
+  special: "특별교육",
+};
+
+function TrainingsSection({ session }: { session: Session }) {
+  const [trainings, setTrainings] = useState<TrainingItem[] | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  function load() {
+    fetch(`/api/worker/trainings?workspace_id=${session.workspace_id}&worker_id=${session.worker_id}`)
+      .then((r) => r.json())
+      .then((d) => setTrainings(d.trainings ?? []))
+      .catch(() => setTrainings([]));
+  }
+  useEffect(load, [session]);
+
+  async function ack(t: TrainingItem) {
+    setBusyId(t.id);
+    await fetch("/api/worker/trainings/ack", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        training_id: t.id,
+        workspace_id: session.workspace_id,
+        worker_id: session.worker_id,
+        worker_name: session.worker_name,
+        signature_name: session.worker_name,
+      }),
+    }).catch(() => {});
+    setBusyId(null);
+    load();
+  }
+
+  const unacked = (trainings ?? []).filter((t) => !t.acked_at);
+  if (!trainings || unacked.length === 0) return null;
+
+  return (
+    <div className="mt-4 space-y-2">
+      {unacked.map((t) => (
+        <div key={t.id} className="rounded-lg border border-safe/40 bg-safe/5 p-3.5">
+          <p className="text-xs font-semibold text-safe">
+            안전보건교육 · {TRAINING_TYPE_LABEL[t.training_type] ?? t.training_type}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-ink">{t.title}</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-ink/80">{t.body}</p>
+          {t.material_url && (
+            <a
+              href={t.material_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-sm font-medium text-safe underline"
+            >
+              교육 자료 보기
+            </a>
+          )}
+          <button
+            onClick={() => ack(t)}
+            disabled={busyId === t.id}
+            className="mt-3 w-full rounded-lg bg-safe px-4 py-2.5 text-sm font-semibold text-white hover:bg-safe-hover disabled:opacity-60"
+          >
+            {busyId === t.id ? "기록 중…" : "교육을 확인했습니다 (이수 서명)"}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function HomeView({ session, go }: { session: Session; go: (v: View) => void }) {
   const [status, setStatus] = useState<TodayStatus | null>(null);
 
@@ -292,6 +408,7 @@ function HomeView({ session, go }: { session: Session; go: (v: View) => void }) 
       </p>
 
       <NoticesSection session={session} />
+      <TrainingsSection session={session} />
 
       <div className="mt-4 flex items-center gap-2 text-sm">
         <span className="text-muted">오늘 점검</span>

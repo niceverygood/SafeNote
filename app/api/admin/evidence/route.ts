@@ -42,7 +42,7 @@ export async function GET(req: Request) {
     .maybeSingle();
   if (!ws) return NextResponse.json({ error: "사업장을 찾을 수 없습니다." }, { status: 404 });
 
-  const [checksQ, reportsQ, noticesQ, acksQ, c1, c2, c3] = await Promise.all([
+  const [checksQ, reportsQ, noticesQ, acksQ, trainingsQ, tacksQ, bItemsQ, bExecsQ, c1, c2, c3, c4, c5] = await Promise.all([
     db
       .from("safety_checks")
       .select("created_at, worker_name, kind, process, items, acknowledged, hash")
@@ -71,9 +71,38 @@ export async function GET(req: Request) {
       .gte("created_at", fromISO)
       .order("created_at", { ascending: true })
       .limit(400),
+    db
+      .from("trainings")
+      .select("id, created_at, title, training_type")
+      .eq("workspace_id", workspaceId)
+      .gte("created_at", fromISO)
+      .order("created_at", { ascending: true })
+      .limit(100),
+    db
+      .from("training_acks")
+      .select("created_at, worker_name, training_id, hash")
+      .eq("workspace_id", workspaceId)
+      .gte("created_at", fromISO)
+      .order("created_at", { ascending: true })
+      .limit(400),
+    db
+      .from("budget_items")
+      .select("id, year, category, label, planned_amount")
+      .eq("workspace_id", workspaceId)
+      .order("year", { ascending: false })
+      .order("created_at", { ascending: true })
+      .limit(100),
+    db
+      .from("budget_executions")
+      .select("created_at, budget_item_id, amount, note, receipt_url, hash")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: true })
+      .limit(500),
     verifyChain(db, "safety_checks", workspaceId),
     verifyChain(db, "hazard_reports", workspaceId),
     verifyChain(db, "notice_acks", workspaceId),
+    verifyChain(db, "training_acks", workspaceId),
+    verifyChain(db, "budget_executions", workspaceId),
   ]);
 
   const noticeTitle = new Map((noticesQ.data ?? []).map((n) => [n.id as string, n.title as string]));
@@ -83,6 +112,23 @@ export async function GET(req: Request) {
     ackCountByNotice.set(k, (ackCountByNotice.get(k) ?? 0) + 1);
   }
 
+  const trainingTitle = new Map((trainingsQ.data ?? []).map((t) => [t.id as string, t.title as string]));
+  const ackCountByTraining = new Map<string, number>();
+  for (const a of tacksQ.data ?? []) {
+    const k = a.training_id as string;
+    ackCountByTraining.set(k, (ackCountByTraining.get(k) ?? 0) + 1);
+  }
+
+  // 예산: 집행 합계는 전체 누계, 집행 목록은 기간 내로 제한
+  const allExecs = bExecsQ.data ?? [];
+  const executedByItem = new Map<string, number>();
+  for (const ex of allExecs) {
+    const k = ex.budget_item_id as string;
+    executedByItem.set(k, (executedByItem.get(k) ?? 0) + Number(ex.amount));
+  }
+  const budgetItemLabel = new Map((bItemsQ.data ?? []).map((b) => [b.id as string, b.label as string]));
+  const periodExecs = allExecs.filter((ex) => (ex.created_at as string) >= fromISO);
+
   const data: EvidenceData = {
     workspaceName: ws.name as string,
     industryLabel: INDUSTRY_LABEL[ws.industry_code as string] ?? (ws.industry_code as string),
@@ -91,7 +137,7 @@ export async function GET(req: Request) {
     fromISO,
     toISO: now.toISOString(),
     generatedAtISO: now.toISOString(),
-    chains: [c1, c2, c3],
+    chains: [c1, c2, c3, c4, c5],
     checks: (checksQ.data ?? []).map((c) => {
       const items = Array.isArray(c.items) ? (c.items as { checked?: boolean }[]) : [];
       return {
@@ -128,6 +174,33 @@ export async function GET(req: Request) {
       worker_name: a.worker_name as string,
       noticeTitle: noticeTitle.get(a.notice_id as string) ?? "(삭제된 공지)",
       hash: a.hash as string,
+    })),
+    trainings: (trainingsQ.data ?? []).map((t) => ({
+      created_at: t.created_at as string,
+      title: t.title as string,
+      training_type: t.training_type as string,
+      ackCount: ackCountByTraining.get(t.id as string) ?? 0,
+    })),
+    trainingAcks: (tacksQ.data ?? []).map((a) => ({
+      created_at: a.created_at as string,
+      worker_name: a.worker_name as string,
+      trainingTitle: trainingTitle.get(a.training_id as string) ?? "(삭제된 교육)",
+      hash: a.hash as string,
+    })),
+    budgetItems: (bItemsQ.data ?? []).map((b) => ({
+      year: b.year as number,
+      category: b.category as string,
+      label: b.label as string,
+      planned_amount: Number(b.planned_amount),
+      executed: executedByItem.get(b.id as string) ?? 0,
+    })),
+    budgetExecutions: periodExecs.map((ex) => ({
+      created_at: ex.created_at as string,
+      itemLabel: budgetItemLabel.get(ex.budget_item_id as string) ?? "(삭제된 항목)",
+      amount: Number(ex.amount),
+      note: (ex.note as string) ?? null,
+      hasReceipt: !!ex.receipt_url,
+      hash: ex.hash as string,
     })),
   };
 

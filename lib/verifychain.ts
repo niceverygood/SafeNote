@@ -13,7 +13,15 @@ export interface ChainResult {
 
 export async function verifyChain(
   db: SupabaseClient,
-  table: "safety_checks" | "hazard_reports" | "notice_acks",
+  table:
+    | "safety_checks"
+    | "hazard_reports"
+    | "notice_acks"
+    | "ppe_issues"
+    | "semiannual_reviews"
+    | "incident_events"
+    | "budget_executions"
+    | "training_acks",
   workspaceId: string
 ): Promise<ChainResult> {
   const { data } = await db
