@@ -3,8 +3,11 @@
  * 원칙: "면책 보장" 류 표현 없음, 하단 법적 고지.
  */
 import React from "react";
-import { Document, Page, Text, View, StyleSheet, Font, Svg, Rect, Image, renderToFile } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Font, Svg, Rect, Image, Link, renderToFile } from "@react-pdf/renderer";
 import { join } from "node:path";
+import QRCode from "qrcode";
+
+const SITE = "https://safe-note-roan.vercel.app";
 
 const C = { surface: "#F6F7F5", ink: "#16201C", safe: "#15643E", caution: "#C2841C", danger: "#A82B22", border: "#DCE0DA", muted: "#5C6B62", white: "#FFFFFF" };
 const P = "https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/public/static";
@@ -34,14 +37,16 @@ const s = StyleSheet.create({
 });
 
 function Logo({ size = 18 }: { size?: number }) {
-  return (<Svg width={size} height={size} viewBox="0 0 24 24"><Rect x="1" y="1" width="22" height="22" rx="5" fill="#15643E1A" stroke="#15643E66" strokeWidth="1.2" /><Rect x="8" y="8" width="8" height="8" rx="2" fill="#15643E" /></Svg>);
+  // react-pdf SVG는 8자리 알파 hex를 잘못 해석 → 불투명 근사색 사용
+  return (<Svg width={size} height={size} viewBox="0 0 24 24"><Rect x="1" y="1" width="22" height="22" rx="5" fill="#E8F0EB" stroke="#8FB5A3" strokeWidth="1.2" /><Rect x="8" y="8" width="8" height="8" rx="2" fill="#15643E" /></Svg>);
 }
 function Footer({ p }: { p: string }) {
   return (<View style={s.footer} fixed><Text>본 자료는 법률자문을 대체하지 않습니다.</Text><Text>세이프노트 · {p}</Text></View>);
 }
 const img = (f: string) => join(process.cwd(), "docs/store", f);
 
-const Doc = (
+// QR은 main()에서 생성해 buildDoc으로 주입 (인쇄물용 — 폰으로 열람 시엔 링크 탭)
+const buildDoc = (QR: string) => (
   <Document title="세이프노트 소개서" author="SafeNote">
     {/* 1. 표지 */}
     <Page size="A4" style={s.page}>
@@ -172,18 +177,35 @@ const Doc = (
 
     {/* 6. CTA */}
     <Page size="A4" style={s.page}>
-      <View style={{ marginTop: 150, alignItems: "center" }}>
+      <View style={{ marginTop: 96, alignItems: "center" }}>
         <Logo size={40} />
         <Text style={[s.h1, { textAlign: "center", marginTop: 22 }]}>위변조 불가능한{"\n"}면책 증빙, 지금 시작.</Text>
         <Text style={[s.body, s.muted, { textAlign: "center", maxWidth: 360, marginBottom: 26 }]}>가입 없이 5분, 우리 사업장의 증빙 갭을 먼저 확인하고 현장에서 증빙을 상시 쌓으세요.</Text>
-        <View style={{ backgroundColor: C.safe, borderRadius: 8, paddingVertical: 12, paddingHorizontal: 28 }}>
-          <Text style={{ color: C.white, fontWeight: 700, fontSize: 12 }}>내 사업장 면책 상태 진단 →</Text>
+        <Link src={SITE} style={{ textDecoration: "none" }}>
+          <View style={{ backgroundColor: C.safe, borderRadius: 8, paddingVertical: 12, paddingHorizontal: 28 }}>
+            <Text style={{ color: C.white, fontWeight: 700, fontSize: 12 }}>내 사업장 면책 상태 진단 →</Text>
+          </View>
+        </Link>
+
+        {/* QR(인쇄물·화면 공유용) + 탭 링크(폰 열람용) */}
+        <View style={{ marginTop: 30, alignItems: "center" }}>
+          <View style={{ padding: 8, backgroundColor: C.white, borderWidth: 1, borderColor: C.border, borderRadius: 10 }}>
+            <Image src={QR} style={{ width: 108, height: 108 }} />
+          </View>
+          <Text style={[s.muted, { fontSize: 9, marginTop: 10 }]}>QR을 찍거나, 휴대폰으로 보고 계시다면 아래 주소를 누르세요.</Text>
+          <Link src={SITE} style={{ color: C.safe, fontSize: 11.5, fontWeight: 700, marginTop: 5, textDecoration: "underline" }}>
+            safe-note-roan.vercel.app
+          </Link>
         </View>
-        <Text style={[s.muted, { fontSize: 9, marginTop: 18 }]}>세이프노트 · safe-note-roan.vercel.app</Text>
       </View>
       <Footer p="05 · 시작하기" />
     </Page>
   </Document>
 );
 
-renderToFile(Doc, join(process.cwd(), "docs", "SafeNote-소개서-차별화.pdf")).then(() => console.log("✓ 생성: docs/SafeNote-소개서-차별화.pdf"));
+async function main() {
+  const qr = await QRCode.toDataURL(SITE, { margin: 1, width: 480, color: { dark: C.ink, light: C.white } });
+  await renderToFile(buildDoc(qr), join(process.cwd(), "docs", "SafeNote-소개서-차별화.pdf"));
+  console.log("✓ 생성: docs/SafeNote-소개서-차별화.pdf");
+}
+main();

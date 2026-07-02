@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 import { Disclaimer } from "@/components/ds/Disclaimer";
+
+const DEMO_ERROR: Record<string, string> = {
+  demo_config: "테스트 계정 환경변수(DEMO_ADMIN_EMAIL/PASSWORD)가 설정되지 않았습니다.",
+  demo_login: "테스트 계정 로그인에 실패했습니다. 계정 정보를 확인하세요.",
+};
 
 export default function AdminLoginPage() {
   const [mode, setMode] = useState<"password" | "magic">("password");
@@ -11,6 +16,12 @@ export default function AdminLoginPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 테스트 로그인 실패 시 리다이렉트로 전달되는 에러 표시
+  useEffect(() => {
+    const e = new URLSearchParams(window.location.search).get("error");
+    if (e && DEMO_ERROR[e]) setError(DEMO_ERROR[e]);
+  }, []);
 
   function nextUrl() {
     return new URLSearchParams(window.location.search).get("next") || "/admin";
@@ -103,6 +114,15 @@ export default function AdminLoginPage() {
               아이디·비밀번호로 로그인
             </button>
           </form>
+        )}
+
+        {process.env.NEXT_PUBLIC_ENABLE_TEST_LOGIN === "true" && (
+          <a
+            href="/api/demo/login"
+            className="mt-4 block w-full rounded-md border border-dashed border-caution/60 bg-caution/5 px-4 py-2.5 text-center text-sm font-semibold text-caution hover:bg-caution/10"
+          >
+            테스트 로그인 (관리자) — 데모용
+          </a>
         )}
       </div>
       <Disclaimer className="mt-6 text-center" />
