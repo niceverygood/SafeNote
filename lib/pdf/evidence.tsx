@@ -49,7 +49,7 @@ function registerFonts() {
 const s = StyleSheet.create({
   page: { fontFamily: "Pretendard", color: C.ink, backgroundColor: C.white, paddingTop: 40, paddingBottom: 52, paddingHorizontal: 40, fontSize: 8.5, lineHeight: 1.4 },
   eyebrow: { fontSize: 8.5, letterSpacing: 2, color: C.safe, fontWeight: 700, marginBottom: 5 },
-  h1: { fontSize: 19, fontWeight: 800, marginBottom: 3 },
+  h1: { fontSize: 19, fontWeight: 800, marginBottom: 8 },
   h2: { fontSize: 12, fontWeight: 800, marginTop: 14, marginBottom: 6 },
   meta: { fontSize: 9, color: C.muted },
   footer: { position: "absolute", bottom: 24, left: 40, right: 40, flexDirection: "row", justifyContent: "space-between", fontSize: 7.5, color: C.muted, borderTopWidth: 1, borderTopColor: C.border, paddingTop: 6 },
@@ -115,7 +115,7 @@ export async function renderEvidencePdf(d: EvidenceData): Promise<Buffer> {
         </Text>
 
         {/* 무결성 검증 */}
-        <View style={[s.box, { marginTop: 12, padding: 10, backgroundColor: allOk ? "#15643E0A" : "#A82B220A", borderColor: allOk ? "#15643E44" : "#A82B2244" }]}>
+        <View style={[s.box, { marginTop: 12, padding: 10, backgroundColor: allOk ? "#EEF4F0" : "#F8EEED", borderColor: allOk ? C.safe : C.danger }]}>
           <Text style={{ fontSize: 10, fontWeight: 800, color: allOk ? C.safe : C.danger, marginBottom: 4 }}>
             해시 체인 무결성 검증: {allOk ? "전체 통과 (위변조·삭제 흔적 없음)" : "이상 감지"}
           </Text>
