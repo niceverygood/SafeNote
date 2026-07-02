@@ -198,6 +198,79 @@ function JoinView({ onJoined }: { onJoined: (s: Session) => void }) {
   );
 }
 
+interface NoticeItem {
+  id: string;
+  title: string;
+  body: string;
+  kind: string;
+  created_at: string;
+  acked_at: string | null;
+}
+
+function NoticesSection({ session }: { session: Session }) {
+  const [notices, setNotices] = useState<NoticeItem[] | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  function load() {
+    fetch(`/api/worker/notices?workspace_id=${session.workspace_id}&worker_id=${session.worker_id}`)
+      .then((r) => r.json())
+      .then((d) => setNotices(d.notices ?? []))
+      .catch(() => setNotices([]));
+  }
+  useEffect(load, [session]);
+
+  async function ack(n: NoticeItem) {
+    setBusyId(n.id);
+    await fetch("/api/worker/notices/ack", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        notice_id: n.id,
+        workspace_id: session.workspace_id,
+        worker_id: session.worker_id,
+        worker_name: session.worker_name,
+        signature_name: session.worker_name,
+      }),
+    }).catch(() => {});
+    setBusyId(null);
+    load();
+  }
+
+  const unacked = (notices ?? []).filter((n) => !n.acked_at);
+  if (!notices || notices.length === 0) return null;
+
+  return (
+    <div className="mt-4 space-y-2">
+      {unacked.map((n) => (
+        <div
+          key={n.id}
+          className={`rounded-lg border p-3.5 ${
+            n.kind === "alert" ? "border-danger/40 bg-danger/5" : "border-caution/40 bg-caution/5"
+          }`}
+        >
+          <p className={`text-xs font-semibold ${n.kind === "alert" ? "text-danger" : "text-caution"}`}>
+            {n.kind === "alert" ? "긴급 공지" : n.kind === "education" ? "안전 교육" : "안전 공지"}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-ink">{n.title}</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-ink/80">{n.body}</p>
+          <button
+            onClick={() => ack(n)}
+            disabled={busyId === n.id}
+            className="mt-3 w-full rounded-lg bg-safe px-4 py-2.5 text-sm font-semibold text-white hover:bg-safe-hover disabled:opacity-60"
+          >
+            {busyId === n.id ? "기록 중…" : "확인했습니다 (서명)"}
+          </button>
+        </div>
+      ))}
+      {unacked.length === 0 && (
+        <p className="rounded-lg border border-border bg-white px-3 py-2.5 text-xs text-muted">
+          공지 {notices.length}건 모두 확인 완료
+        </p>
+      )}
+    </div>
+  );
+}
+
 function HomeView({ session, go }: { session: Session; go: (v: View) => void }) {
   const [status, setStatus] = useState<TodayStatus | null>(null);
 
@@ -217,6 +290,8 @@ function HomeView({ session, go }: { session: Session; go: (v: View) => void }) 
       <p className="mt-2 text-sm leading-relaxed text-muted">
         작업 전·중·후 점검은 나를 보호하는 기록이자, 사업장의 안전 증빙으로 남습니다.
       </p>
+
+      <NoticesSection session={session} />
 
       <div className="mt-4 flex items-center gap-2 text-sm">
         <span className="text-muted">오늘 점검</span>
@@ -509,6 +584,7 @@ function StageFlow({ session, kind, back }: { session: Session; kind: StageKey; 
 
 function ReportFlow({ session, back }: { session: Session; back: () => void }) {
   const [description, setDescription] = useState("");
+  const [reportType, setReportType] = useState<"hazard" | "near_miss">("hazard");
   const [severity, setSeverity] = useState<"low" | "medium" | "high">("medium");
   const [location, setLocation] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
@@ -564,6 +640,7 @@ function ReportFlow({ session, back }: { session: Session; back: () => void }) {
         worker_id: session.worker_id,
         worker_name: session.worker_name,
         description,
+        report_type: reportType,
         severity,
         location: location.trim() || undefined,
         photo_url: photoUrl,
@@ -594,6 +671,26 @@ function ReportFlow({ session, back }: { session: Session; back: () => void }) {
       <h1 className="text-xl font-bold text-ink">위험 신고</h1>
       <p className="mt-1 text-sm text-muted">발견한 위험 상태를 알려주세요. 빠른 조치로 이어집니다.</p>
       <div className="mt-5 space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          {(
+            [
+              ["hazard", "위험 신고", "지금 위험한 상태"],
+              ["near_miss", "아차사고", "사고 날 뻔한 상황"],
+            ] as const
+          ).map(([v, label, hint]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setReportType(v)}
+              className={`rounded-lg border px-3 py-2.5 text-left ${
+                reportType === v ? "border-safe bg-safe/10" : "border-border bg-white"
+              }`}
+            >
+              <span className={`block text-sm font-semibold ${reportType === v ? "text-safe" : "text-ink"}`}>{label}</span>
+              <span className="block text-[11px] text-muted">{hint}</span>
+            </button>
+          ))}
+        </div>
         <textarea
           className={`${field} min-h-[120px]`}
           placeholder="무엇이 위험한가요? (예: 통로에 적재물이 쌓여 있음)"

@@ -4,6 +4,7 @@ import { getServiceSupabase } from "@/lib/supabase/server";
 import { HazardResolver } from "@/components/admin/HazardResolver";
 import { WorkerAccountManager } from "@/components/admin/WorkerAccountManager";
 import { ManagerCreator } from "@/components/admin/ManagerCreator";
+import { NoticeManager } from "@/components/admin/NoticeManager";
 import { requireWorkspaceAccess } from "@/lib/adminGuard";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,7 @@ interface HazardReport {
   worker_name: string;
   location: string | null;
   description: string;
+  report_type: string;
   severity: string;
   status: string;
   resolution: string | null;
@@ -122,7 +124,7 @@ export default async function WorkspaceDetailPage({
       .limit(20),
     db
       .from("hazard_reports")
-      .select("id, worker_name, location, description, severity, status, resolution, photo_url, hash, created_at")
+      .select("id, worker_name, location, description, report_type, severity, status, resolution, photo_url, hash, created_at")
       .eq("workspace_id", params.id)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -132,6 +134,29 @@ export default async function WorkspaceDetailPage({
       .eq("workspace_id", params.id)
       .order("created_at", { ascending: false }),
   ]);
+
+  // 공지 + 확인 서명 수
+  const [{ data: noticeData }, { data: ackData }] = await Promise.all([
+    db
+      .from("notices")
+      .select("id, title, kind, created_at")
+      .eq("workspace_id", params.id)
+      .order("created_at", { ascending: false })
+      .limit(30),
+    db.from("notice_acks").select("notice_id").eq("workspace_id", params.id),
+  ]);
+  const ackCount = new Map<string, number>();
+  for (const a of ackData ?? []) {
+    const k = a.notice_id as string;
+    ackCount.set(k, (ackCount.get(k) ?? 0) + 1);
+  }
+  const notices = (noticeData ?? []).map((n) => ({
+    id: n.id as string,
+    title: n.title as string,
+    kind: n.kind as string,
+    created_at: n.created_at as string,
+    ackCount: ackCount.get(n.id as string) ?? 0,
+  }));
 
   const checks = (checkData ?? []) as SafetyCheck[];
   const hazards = (hazardData ?? []) as HazardReport[];
@@ -158,12 +183,28 @@ export default async function WorkspaceDetailPage({
             {workspace.size_band} · 상시근로자 {workspace.worker_count}명
           </p>
         </div>
-        <Link
-          href={`/admin/workspaces/${params.id}/dashboard`}
-          className="shrink-0 rounded-md bg-safe px-4 py-2 text-sm font-semibold text-white hover:bg-safe-hover"
-        >
-          작업 전·중·후 점검 대시보드 →
-        </Link>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href={`/admin/workspaces/${params.id}/dashboard`}
+            className="rounded-md bg-safe px-4 py-2 text-sm font-semibold text-white hover:bg-safe-hover"
+          >
+            작업 전·중·후 점검 대시보드 →
+          </Link>
+          <a
+            href={`/api/admin/evidence?workspace_id=${params.id}&days=30`}
+            target="_blank"
+            className="rounded-md border border-safe px-4 py-2 text-sm font-semibold text-safe hover:bg-safe/10"
+          >
+            증빙 리포트 PDF (30일)
+          </a>
+          <a
+            href={`/api/admin/evidence?workspace_id=${params.id}&days=90`}
+            target="_blank"
+            className="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink hover:bg-surface"
+          >
+            90일
+          </a>
+        </div>
       </div>
 
       {/* 참여코드 + QR — 노동자 입장 안내 */}
@@ -198,6 +239,17 @@ export default async function WorkspaceDetailPage({
           </div>
         </section>
       )}
+
+      {/* 안전 공지·주지 */}
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold text-ink">안전 공지·수칙 주지</h2>
+        <p className="mt-1 text-xs text-muted">
+          근로자에게 위험·수칙을 알리고, 확인 서명을 주지 의무 증빙으로 남깁니다.
+        </p>
+        <div className="mt-3">
+          <NoticeManager workspaceId={workspace.id} notices={notices} workerTotal={workers.length} />
+        </div>
+      </section>
 
       {/* 근로자 계정 발급 */}
       <section className="mt-8">
@@ -284,12 +336,17 @@ export default async function WorkspaceDetailPage({
                   <td className="px-4 py-3 text-ink">{h.worker_name}</td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded border px-2 py-0.5 text-xs ${
+                      className={`rounded border px-2 py-0.5 text-xs whitespace-nowrap ${
                         SEVERITY_CLS[h.severity] ?? "border-border text-muted"
                       }`}
                     >
                       {SEVERITY_LABEL[h.severity] ?? h.severity}
                     </span>
+                    {h.report_type === "near_miss" && (
+                      <span className="ml-1 rounded border border-safe/30 bg-safe/10 px-1.5 py-0.5 text-[10px] text-safe whitespace-nowrap">
+                        아차사고
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <HazardResolver id={h.id} status={h.status} resolution={h.resolution} />
